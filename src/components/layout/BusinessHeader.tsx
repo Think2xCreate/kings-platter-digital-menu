@@ -110,13 +110,13 @@ export function BusinessHeader({
           {/* Desktop Right Info */}
           <div className="hidden lg:flex items-center gap-4">
             {/* Phone */}
-            <a
+            {/* <a
               href={`tel:${business.phone}`}
               className="flex items-center gap-1.5 text-xs font-medium text-[#E5E5ED] hover:text-[#E5A93C] transition-colors bg-[#1A1A20] px-3.5 py-2 rounded-full border border-[#2B2B35]"
             >
               <Phone className="w-3.5 h-3.5 text-[#E5A93C]" />
               <span>{business.phone}</span>
-            </a>
+            </a> */}
 
             {/* Selected Dishes Drawer Toggle */}
             {onOpenCart && (
