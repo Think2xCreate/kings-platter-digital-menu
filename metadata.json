@@ -1,0 +1,7 @@
+{
+  "name": "King's Platter Digital Menu",
+  "description": "Premium customer-facing QR digital restaurant menu for King's Platter Restaurant & Cafe.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
