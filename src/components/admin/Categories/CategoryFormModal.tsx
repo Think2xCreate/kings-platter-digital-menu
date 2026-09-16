@@ -27,6 +27,8 @@ export function CategoryFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [imageStorageKey, setImageStorageKey] = useState('');
+
   useEffect(() => {
     if (initialData && mode === 'edit') {
       setName(initialData.name || '');
@@ -34,12 +36,14 @@ export function CategoryFormModal({
       setDisplayOrder(initialData.displayOrder || 1);
       setIsActive(initialData.isActive !== false);
       setImageUrl(initialData.imageUrl || '');
+      setImageStorageKey(initialData.imageStorageKey || '');
     } else {
       setName('');
       setDescription('');
       setDisplayOrder(1);
       setIsActive(true);
-      setImageUrl('/default-fallback_image.webp');
+      setImageUrl('');
+      setImageStorageKey('');
     }
     setError(null);
   }, [initialData, mode, isOpen]);
@@ -59,8 +63,9 @@ export function CategoryFormModal({
     try {
       setIsSubmitting(true);
       setError(null);
-      const uploadedUrl = await uploadImageToSupabase(file, 'categories');
-      setImageUrl(uploadedUrl);
+      const res = await uploadImageToSupabase(file, 'categories');
+      setImageUrl(res.url);
+      setImageStorageKey(res.path || '');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to upload image.';
       setError(msg);
@@ -88,6 +93,7 @@ export function CategoryFormModal({
         displayOrder: Number(displayOrder) || 1,
         isActive,
         imageUrl: imageUrl.trim(),
+        imageStorageKey: imageStorageKey.trim(),
       });
 
       onClose();

@@ -9,8 +9,6 @@ interface GoogleReviewModalProps {
   suggestedFoodName?: string;
 }
 
-const DEFAULT_GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJrzeECyrPBjsRK1OB2iwAL_4';
-
 export function GoogleReviewModal({ isOpen, onClose, business, suggestedFoodName }: GoogleReviewModalProps) {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState<string>('');
@@ -45,16 +43,20 @@ export function GoogleReviewModal({ isOpen, onClose, business, suggestedFoodName
       setIsCopied(true);
     }
 
-    const targetUrl = business.googleReviewUrl || DEFAULT_GOOGLE_REVIEW_URL;
-    
-    // Brief delay to let the user see the copied state before opening the review tab
-    setTimeout(() => {
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    const targetUrl = business.googleReviewUrl?.trim();
+    if (targetUrl) {
+      // Brief delay to let the user see the copied state before opening the review tab
       setTimeout(() => {
-        setIsCopied(false);
-        onClose();
-      }, 800);
-    }, 400);
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        setTimeout(() => {
+          setIsCopied(false);
+          onClose();
+        }, 800);
+      }, 400);
+    } else {
+      setIsCopied(false);
+      onClose();
+    }
   };
 
   return (

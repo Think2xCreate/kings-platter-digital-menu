@@ -10,11 +10,13 @@ import {
 } from 'lucide-react';
 import { CrownIcon } from '../common/MenuIcons';
 import { AdminTab } from './AdminSidebar';
+import { resolveLogoUrl } from '../../utils/imageResolver';
 
 interface AdminMobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   activeTab: AdminTab;
+  logoUrl?: string;
   onSelectTab: (tab: AdminTab) => void;
   onLogout: () => void;
   onViewCustomerMenu: () => void;
@@ -24,6 +26,7 @@ export function AdminMobileDrawer({
   isOpen,
   onClose,
   activeTab,
+  logoUrl,
   onSelectTab,
   onLogout,
   onViewCustomerMenu,
@@ -70,7 +73,7 @@ export function AdminMobileDrawer({
             <div className="flex items-center gap-2.5">
               <div className="h-10 flex items-center">
                 <img
-                  src="/kings_platter_logo.jpg"
+                  src={resolveLogoUrl(logoUrl)}
                   alt="King's Platter"
                   className="h-9 w-auto max-h-9 object-contain rounded-lg drop-shadow-sm"
                 />

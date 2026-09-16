@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Bell, ChevronDown, Menu, ExternalLink, LogOut, Shield } from 'lucide-react';
 import { CrownIcon } from '../common/MenuIcons';
 import { AdminUser } from '../../services/adminAuth';
+import { resolveLogoUrl } from '../../utils/imageResolver';
 
 interface AdminHeaderProps {
   user: AdminUser | null;
+  logoUrl?: string;
   onOpenMobileDrawer: () => void;
   onViewCustomerMenu: () => void;
   onLogout: () => void;
@@ -12,6 +14,7 @@ interface AdminHeaderProps {
 
 export function AdminHeader({
   user,
+  logoUrl,
   onOpenMobileDrawer,
   onViewCustomerMenu,
   onLogout,
@@ -46,34 +49,29 @@ export function AdminHeader({
 
         {/* Mobile Center Brand */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#E5A93C]/40 bg-[#0B1E15] shadow-xs shrink-0 p-0.5 flex items-center justify-center">
+          {/* <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#E5A93C]/40 bg-[#0B1E15] shadow-xs shrink-0 p-0.5 flex items-center justify-center">
             <img
-              src="/kings_platter_logo.jpg"
+              src={resolveLogoUrl(logoUrl)}
               alt="King's Platter"
               className="w-full h-full object-contain rounded-md"
             />
-          </div>
-          <span className="font-royal font-bold text-sm tracking-wide text-gray-900">
-            Digital Menu
-          </span>
+          </div> */}
+          {/* <span className="font-bold text-sm tracking-wide text-gray-900">
+            Admin Portal
+          </span> */}
         </div>
       </div>
 
       {/* Desktop Left: Breadcrumb / Status */}
       <div className="hidden md:flex items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+        {/* <span className="font-bold text-sm tracking-wide text-gray-900">
           Admin Portal
-        </span>
-        <span className="text-gray-300">•</span>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          System Operational
-        </span>
+        </span> */}
       </div>
 
       {/* Right Side: Notification Bell & Admin Profile */}
       <div className="flex items-center gap-3 sm:gap-4" ref={dropdownRef}>
-        
+
         {/* Profile Avatar & Dropdown */}
         <div className="relative">
           <button
@@ -86,7 +84,7 @@ export function AdminHeader({
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#831828] text-white font-bold text-sm sm:text-base flex items-center justify-center shadow-xs">
               {user?.name?.charAt(0) || 'A'}
             </div>
-            
+
             <div className="hidden sm:flex flex-col text-left">
               <span className="text-xs font-bold text-gray-900 leading-tight">
                 {user?.name || 'Admin'}

@@ -2,6 +2,7 @@ import React from 'react';
 import { Phone } from 'lucide-react';
 import { BusinessProfile } from '../../types/menu';
 import { CrownIcon, CartNavIcon } from '../common/MenuIcons';
+import { resolveLogoUrl } from '../../utils/imageResolver';
 
 interface BusinessHeaderProps {
   business: BusinessProfile;
@@ -28,9 +29,9 @@ export function BusinessHeader({
     <header className="sticky top-0 z-40 bg-[#0D0D11]/95 backdrop-blur-md border-b border-[#222228] transition-all shadow-md shadow-black/40">
       <div className="px-4 sm:px-6 md:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-4">
-          
-          {/* Brand Identity: Complete Logo As Primary Brand Anchor (Zero Redundant Text) */}
-          <div 
+
+          {/* Brand Identity: Complete Responsive Logo Container (9:16 Aspect Ratio Preserved) */}
+          <div
             className="flex items-center cursor-pointer select-none shrink-0"
             onClick={() => onNavTabChange('home')}
             role="button"
@@ -43,20 +44,14 @@ export function BusinessHeader({
               }
             }}
           >
-            {business.logoUrl || '/kings_platter_logo.jpg' ? (
-              <div className="h-10 sm:h-12 flex items-center justify-center">
-                <img
-                  src={business.logoUrl || '/kings_platter_logo.jpg'}
-                  alt={business.name || "King's Platter"}
-                  className="h-9 sm:h-11 w-auto max-h-11 object-contain rounded-lg drop-shadow-sm hover:opacity-95 transition-opacity"
-                  loading="eager"
-                />
-              </div>
-            ) : (
-              <span className="font-royal text-base sm:text-xl font-bold tracking-wider text-white">
-                {business.name}
-              </span>
-            )}
+            <div className="h-11 sm:h-13 md:h-14 flex items-center justify-center py-1">
+              <img
+                src={resolveLogoUrl(business.logoUrl)}
+                alt={business.name || "King's Platter"}
+                className="h-10 sm:h-12 md:h-13 w-auto max-h-13 object-contain rounded-lg drop-shadow-sm hover:opacity-95 transition-opacity"
+                loading="eager"
+              />
+            </div>
           </div>
 
           {/* Desktop Navigation Tabs */}
@@ -64,11 +59,10 @@ export function BusinessHeader({
             <button
               type="button"
               onClick={() => onNavTabChange('home')}
-              className={`transition-colors py-2 relative cursor-pointer ${
-                activeNavTab === 'home'
+              className={`transition-colors py-2 relative cursor-pointer ${activeNavTab === 'home'
                   ? 'text-white font-semibold'
                   : 'text-[#9C9CA8] hover:text-white'
-              }`}
+                }`}
             >
               Home
               {activeNavTab === 'home' && (
@@ -82,11 +76,10 @@ export function BusinessHeader({
                 onNavTabChange('menu');
                 if (onOpenShowcaseMenu) onOpenShowcaseMenu();
               }}
-              className={`transition-colors py-2 relative cursor-pointer ${
-                activeNavTab === 'menu'
+              className={`transition-colors py-2 relative cursor-pointer ${activeNavTab === 'menu'
                   ? 'text-[#E5A93C] font-semibold'
                   : 'text-[#9C9CA8] hover:text-[#E5A93C]'
-              }`}
+                }`}
             >
               Menu
               {activeNavTab === 'menu' && (
@@ -97,11 +90,10 @@ export function BusinessHeader({
             <button
               type="button"
               onClick={onOpenAboutModal}
-              className={`transition-colors py-2 relative cursor-pointer ${
-                activeNavTab === 'about'
+              className={`transition-colors py-2 relative cursor-pointer ${activeNavTab === 'about'
                   ? 'text-white font-semibold'
                   : 'text-[#9C9CA8] hover:text-white'
-              }`}
+                }`}
             >
               About
             </button>

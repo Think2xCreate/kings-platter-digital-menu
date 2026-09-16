@@ -3,6 +3,6 @@
 import React from 'react';
 import { CustomerMenuView } from '@/components/menu/CustomerMenuView';
 
-export default function CustomerPage() {
+export default function CustomerKitchenPage() {
   return <CustomerMenuView />;
 }

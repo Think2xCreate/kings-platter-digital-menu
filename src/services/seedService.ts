@@ -3,11 +3,9 @@ import { mockBusinessProfile, mockCategories, mockFoodItems } from '../data/mock
 
 let isSeedingPerformed = false;
 
-const FALLBACK_IMAGE = '/default-fallback_image.webp';
-
 function sanitizeImage(url?: string): string {
-  if (!url || url.includes('unsplash.com')) {
-    return FALLBACK_IMAGE;
+  if (!url || url.includes('unsplash.com') || url.includes('pexels.com')) {
+    return '';
   }
   return url;
 }
@@ -26,7 +24,12 @@ export async function seedInitialDataIfEmpty() {
     if (!profileSnap.exists) {
       await profileRef.set({
         ...mockBusinessProfile,
-        logoUrl: sanitizeImage(mockBusinessProfile.logoUrl),
+        logoUrl: sanitizeImage(mockBusinessProfile.logoUrl) || '/kings_platter_logo.jpg',
+        instagram: '',
+        facebook: '',
+        website: '',
+        whatsappNumber: '+91 98765 43210',
+        whatsapp: 'https://wa.me/919876543210',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -70,4 +73,5 @@ export async function seedInitialDataIfEmpty() {
     isSeedingPerformed = true;
   }
 }
+
 

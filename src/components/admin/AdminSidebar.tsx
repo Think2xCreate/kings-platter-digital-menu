@@ -8,11 +8,13 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { CrownIcon } from '../common/MenuIcons';
+import { resolveLogoUrl } from '../../utils/imageResolver';
 
 export type AdminTab = 'dashboard' | 'categories' | 'food-items' | 'profile';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
+  logoUrl?: string;
   onSelectTab: (tab: AdminTab) => void;
   onLogout: () => void;
   onViewCustomerMenu: () => void;
@@ -20,6 +22,7 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({
   activeTab,
+  logoUrl,
   onSelectTab,
   onLogout,
   onViewCustomerMenu,
@@ -55,7 +58,7 @@ export function AdminSidebar({
           <div className="flex items-center justify-between">
             <div className="h-11 flex items-center">
               <img
-                src="/kings_platter_logo.jpg"
+                src={resolveLogoUrl(logoUrl)}
                 alt="King's Platter"
                 className="h-10 w-auto max-h-10 object-contain rounded-lg drop-shadow-sm"
               />

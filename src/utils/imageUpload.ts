@@ -1,5 +1,10 @@
 import { adminAuth } from '../services/adminAuth';
 
+export interface UploadResult {
+  url: string;
+  path: string;
+}
+
 /**
  * Uploads an image file to the Next.js /api/upload endpoint,
  * which validates format (.jpg, .png, .webp), converts to lightweight .webp,
@@ -8,7 +13,7 @@ import { adminAuth } from '../services/adminAuth';
 export async function uploadImageToSupabase(
   file: File,
   folder: 'business' | 'categories' | 'food-items' = 'food-items'
-): Promise<string> {
+): Promise<UploadResult> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('folder', folder);
@@ -30,5 +35,8 @@ export async function uploadImageToSupabase(
     throw new Error(resData.error?.message || 'Failed to upload image.');
   }
 
-  return resData.data.url;
+  return {
+    url: resData.data.url,
+    path: resData.data.path || '',
+  };
 }

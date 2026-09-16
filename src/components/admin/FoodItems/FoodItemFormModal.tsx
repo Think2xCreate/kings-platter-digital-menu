@@ -32,6 +32,7 @@ export function FoodItemFormModal({
   const [displayOrder, setDisplayOrder] = useState<number>(1);
   const [isPopular, setIsPopular] = useState(false);
   
+  const [imageStorageKey, setImageStorageKey] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +46,7 @@ export function FoodItemFormModal({
       setEnableOffer(!!initialData.discountPercentage && initialData.discountPercentage > 0);
       setDiscountPercentage(initialData.discountPercentage || 0);
       setImageUrl(initialData.imageUrl || '');
+      setImageStorageKey(initialData.imageStorageKey || '');
       setIsAvailable(initialData.isAvailable);
       setDietary(initialData.dietary);
       setIsPopular(!!initialData.isPopular);
@@ -57,6 +59,7 @@ export function FoodItemFormModal({
       setEnableOffer(false);
       setDiscountPercentage(0);
       setImageUrl('');
+      setImageStorageKey('');
       setIsAvailable(true);
       setDietary('non-veg');
       setIsPopular(false);
@@ -85,8 +88,9 @@ export function FoodItemFormModal({
     try {
       setIsSubmitting(true);
       setError(null);
-      const uploadedUrl = await uploadImageToSupabase(file, 'food-items');
-      setImageUrl(uploadedUrl);
+      const res = await uploadImageToSupabase(file, 'food-items');
+      setImageUrl(res.url);
+      setImageStorageKey(res.path || '');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to upload image.';
       setError(msg);
@@ -130,7 +134,8 @@ export function FoodItemFormModal({
         price: Number(price),
         discountPercentage: enableOffer ? Number(discountPercentage) : 0,
         originalPrice: enableOffer ? Number(price) : undefined,
-        imageUrl: imageUrl.trim() || '/default-fallback_image.webp',
+        imageUrl: imageUrl.trim(),
+        imageStorageKey: imageStorageKey.trim(),
         isAvailable,
         dietary,
         isPopular,

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { X, Crown, MapPin, Phone, Clock, MessageCircle, Utensils, Award, ShieldCheck } from 'lucide-react';
 import { BusinessProfile } from '../../types/menu';
+import { resolveLogoUrl } from '../../utils/imageResolver';
 
 interface AboutModalProps {
   business: BusinessProfile;
@@ -51,7 +52,7 @@ export function AboutModal({ business, isOpen, onClose }: AboutModalProps) {
         <div className="flex items-center gap-3">
           <div className="h-12 flex items-center">
             <img
-              src={business.logoUrl || '/kings_platter_logo.jpg'}
+              src={resolveLogoUrl(business.logoUrl)}
               alt={business.name || "King's Platter"}
               className="h-11 w-auto max-h-11 object-contain rounded-xl drop-shadow-md"
             />
@@ -104,18 +105,20 @@ export function AboutModal({ business, isOpen, onClose }: AboutModalProps) {
             <span>Open: {business.openingHours}</span>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <Phone className="w-4 h-4 text-[#E5A93C] shrink-0" />
-            <a href={`tel:${business.phone}`} className="hover:text-white underline">
-              {business.phone}
-            </a>
-          </div>
+          {business.phone && (
+            <div className="flex items-center gap-2.5">
+              <Phone className="w-4 h-4 text-[#E5A93C] shrink-0" />
+              <a href={`tel:${business.phone}`} className="hover:text-white underline">
+                {business.phone}
+              </a>
+            </div>
+          )}
 
           {business.whatsapp && (
             <div className="flex items-center gap-2.5">
               <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0" />
               <a
-                href={`https://wa.me/${business.whatsapp.replace(/\D/g, '')}`}
+                href={business.whatsapp.startsWith('http') ? business.whatsapp : `https://wa.me/${business.whatsapp.replace(/\D/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-emerald-400 hover:text-emerald-300 underline"

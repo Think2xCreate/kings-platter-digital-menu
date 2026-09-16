@@ -8,9 +8,14 @@ export interface BusinessProfile {
   phone: string;
   email?: string;
   logoUrl?: string;
+  logoStorageKey?: string;
   whatsapp?: string;
+  whatsappNumber?: string;
   mapUrl: string;
   openingHours: string;
+  openingTime?: string;
+  closingTime?: string;
+  workingDays?: string;
   currency: string;
   instagram?: string;
   facebook?: string;
@@ -39,6 +44,7 @@ export interface FoodItem {
   discountPercentage?: number;
   finalPrice: number;
   imageUrl: string;
+  imageStorageKey?: string;
   isAvailable: boolean;
   dietary: DietaryType;
   isPopular?: boolean;
@@ -59,6 +65,7 @@ export interface Category {
   slug?: string;
   iconName: string;
   imageUrl?: string;
+  imageStorageKey?: string;
   description?: string;
   displayOrder: number;
   isActive: boolean;

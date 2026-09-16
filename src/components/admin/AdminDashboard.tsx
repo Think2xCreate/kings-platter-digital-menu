@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { AdminSidebar, AdminTab } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
 import { AdminMobileDrawer } from './AdminMobileDrawer';
@@ -12,22 +13,44 @@ import { AdminToast } from './AdminToast';
 import { adminAuth, AdminUser } from '../../services/adminAuth';
 import { menuRepository } from '../../services/menuRepository';
 import { Category, FoodItem, BusinessProfile } from '../../types/menu';
-import { mockBusinessProfile } from '../../data/mock-menu';
 
 interface AdminDashboardProps {
-  onBackToCustomerMenu: () => void;
+  onBackToCustomerMenu?: () => void;
+  initialTab?: AdminTab;
 }
 
-export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
+export function AdminDashboard({ onBackToCustomerMenu, initialTab = 'dashboard' }: AdminDashboardProps) {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  // Sync activeTab when initialTab prop changes
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    if (tab === 'dashboard') router.push('/admin');
+    else if (tab === 'categories') router.push('/admin/categories');
+    else if (tab === 'food-items') router.push('/admin/food-items');
+    else if (tab === 'profile') router.push('/admin/business-profile');
+  };
+
+  const handleReturnToCustomer = () => {
+    if (onBackToCustomerMenu) {
+      onBackToCustomerMenu();
+    } else {
+      router.push('/menu/kings-platter');
+    }
+  };
 
   // Data state from repository
   const [categories, setCategories] = useState<Category[]>([]);
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [business, setBusiness] = useState<BusinessProfile>(mockBusinessProfile);
+  const [business, setBusiness] = useState<BusinessProfile | null>(null);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
 
   // Quick Action Modal triggers
@@ -84,6 +107,7 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
     adminAuth.logout();
     setCurrentUser(null);
     showToast('Logged out successfully.', 'info');
+    router.push('/admin/login');
   };
 
   // Category Actions
@@ -100,7 +124,11 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    await menuRepository.deleteCategory(id);
+    const res = await menuRepository.deleteCategory(id);
+    if (!res.success) {
+      showToast(res.error || 'Failed to delete category.', 'error');
+      return;
+    }
     await loadData();
     showToast('Category deleted successfully.', 'info');
   };
@@ -119,7 +147,11 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
   };
 
   const handleDeleteFoodItem = async (id: string) => {
-    await menuRepository.deleteFoodItem(id);
+    const res = await menuRepository.deleteFoodItem(id);
+    if (!res.success) {
+      showToast(res.error || 'Failed to delete food item.', 'error');
+      return;
+    }
     await loadData();
     showToast('Food item deleted.', 'info');
   };
@@ -133,7 +165,7 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
 
   const handleNavigateToFoodItemsWithCategory = (catId: string) => {
     setSelectedCategoryFilter(catId);
-    setActiveTab('food-items');
+    handleTabChange('food-items');
   };
 
   if (isAuthLoading) {
@@ -154,7 +186,7 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
         <AdminLoginModal
           isOpen={true}
           onSuccess={handleLoginSuccess}
-          onCancel={onBackToCustomerMenu}
+          onCancel={handleReturnToCustomer}
         />
         {toastMessage && (
           <AdminToast
@@ -173,9 +205,9 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
       <div className="hidden md:block">
         <AdminSidebar
           activeTab={activeTab}
-          onSelectTab={setActiveTab}
+          onSelectTab={handleTabChange}
           onLogout={handleLogout}
-          onViewCustomerMenu={onBackToCustomerMenu}
+          onViewCustomerMenu={handleReturnToCustomer}
         />
       </div>
 
@@ -184,9 +216,12 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
         isOpen={isMobileDrawerOpen}
         onClose={() => setIsMobileDrawerOpen(false)}
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={(tab) => {
+          setIsMobileDrawerOpen(false);
+          handleTabChange(tab);
+        }}
         onLogout={handleLogout}
-        onViewCustomerMenu={onBackToCustomerMenu}
+        onViewCustomerMenu={handleReturnToCustomer}
       />
 
       {/* Main Content Area */}
@@ -194,23 +229,23 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
         <AdminHeader
           user={currentUser}
           onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
-          onViewCustomerMenu={onBackToCustomerMenu}
+          onViewCustomerMenu={handleReturnToCustomer}
           onLogout={handleLogout}
         />
 
         <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto">
-          {activeTab === 'dashboard' && (
+          {activeTab === 'dashboard' && business && (
             <DashboardOverview
               categories={categories}
               foodItems={foodItems}
               business={business}
-              onNavigateTab={setActiveTab}
+              onNavigateTab={handleTabChange}
               onOpenAddCategory={() => {
-                setActiveTab('categories');
+                handleTabChange('categories');
                 setIsAddCategoryOpen(true);
               }}
               onOpenAddFoodItem={() => {
-                setActiveTab('food-items');
+                handleTabChange('food-items');
                 setIsAddFoodItemOpen(true);
               }}
             />
@@ -242,7 +277,7 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
             />
           )}
 
-          {activeTab === 'profile' && (
+          {activeTab === 'profile' && business && (
             <BusinessProfileView
               business={business}
               onUpdateBusiness={handleUpdateBusiness}
@@ -262,3 +297,4 @@ export function AdminDashboard({ onBackToCustomerMenu }: AdminDashboardProps) {
     </div>
   );
 }
+

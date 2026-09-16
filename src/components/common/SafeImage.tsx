@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { resolveImageUrl, DEFAULT_FALLBACK_IMAGE } from '../../utils/imageResolver';
 
-export const FALLBACK_IMAGE = '/default-fallback_image.webp';
+export const FALLBACK_IMAGE = DEFAULT_FALLBACK_IMAGE;
 
 interface SafeImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   src?: string | null;
@@ -8,23 +9,13 @@ interface SafeImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>,
   fallbackSrc?: string;
 }
 
-export function SafeImage({ src, alt, fallbackSrc = FALLBACK_IMAGE, className, ...props }: SafeImageProps) {
-  const [imgSrc, setImgSrc] = useState<string>(() => {
-    if (!src || src.trim() === '' || src.includes('unsplash.com')) {
-      return fallbackSrc;
-    }
-    return src;
-  });
+export function SafeImage({ src, alt, fallbackSrc = DEFAULT_FALLBACK_IMAGE, className, ...props }: SafeImageProps) {
+  const [imgSrc, setImgSrc] = useState<string>(() => resolveImageUrl(src, fallbackSrc));
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (!src || src.trim() === '' || src.includes('unsplash.com')) {
-      setImgSrc(fallbackSrc);
-      setHasError(false);
-    } else {
-      setImgSrc(src);
-      setHasError(false);
-    }
+    setImgSrc(resolveImageUrl(src, fallbackSrc));
+    setHasError(false);
   }, [src, fallbackSrc]);
 
   return (
@@ -42,3 +33,4 @@ export function SafeImage({ src, alt, fallbackSrc = FALLBACK_IMAGE, className, .
     />
   );
 }
+

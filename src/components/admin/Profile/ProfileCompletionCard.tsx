@@ -1,6 +1,7 @@
 import React from 'react';
-import { CheckCircle2, ArrowRight, AlertCircle } from 'lucide-react';
+import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { BusinessProfile } from '../../../types/menu';
+import { calculateBusinessProfileCompletion } from '../../../utils/profileCompletion';
 
 interface ProfileCompletionCardProps {
   business: BusinessProfile;
@@ -8,40 +9,12 @@ interface ProfileCompletionCardProps {
   variant?: 'dashboard' | 'profile-banner';
 }
 
-interface RequiredFieldDef {
-  key: keyof BusinessProfile;
-  label: string;
-}
-
-const REQUIRED_FIELDS: RequiredFieldDef[] = [
-  { key: 'name', label: 'Restaurant name' },
-  { key: 'location', label: 'City location' },
-  { key: 'phone', label: 'Business phone number' },
-  { key: 'email', label: 'Business email address' },
-  { key: 'logoUrl', label: 'Restaurant logo' },
-];
-
 export function ProfileCompletionCard({
   business,
   onNavigateProfile,
   variant = 'dashboard',
 }: ProfileCompletionCardProps) {
-  // Data-driven calculation of completed required fields
-  const missingFields: string[] = [];
-  let completedCount = 0;
-
-  for (const field of REQUIRED_FIELDS) {
-    const val = business[field.key];
-    if (typeof val === 'string' && val.trim().length > 0) {
-      completedCount++;
-    } else {
-      missingFields.push(field.label);
-    }
-  }
-
-  const totalFields = REQUIRED_FIELDS.length;
-  const percentage = Math.round((completedCount / totalFields) * 100);
-  const isComplete = percentage === 100;
+  const { percentage, completedCount, totalFields, isComplete, missingFields } = calculateBusinessProfileCompletion(business);
   const remainingCount = totalFields - completedCount;
 
   // SVG Circle Progress parameters
@@ -224,3 +197,4 @@ export function ProfileCompletionCard({
     </div>
   );
 }
+
