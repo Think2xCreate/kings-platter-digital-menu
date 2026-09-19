@@ -49,9 +49,9 @@ export function CartTrayDrawer({
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#22222A] flex items-center justify-between bg-[#15151C]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E5A93C] to-[#B07110] flex items-center justify-center text-black shadow-md">
+            {/* <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E5A93C] to-[#B07110] flex items-center justify-center text-black shadow-md">
               <TableOrderNavIcon className="w-5 h-5" />
-            </div>
+            </div> */}
             <div>
               <div className="flex items-center gap-2">
                 <h2 id="selected-dishes-title" className="text-base sm:text-lg font-bold text-white">

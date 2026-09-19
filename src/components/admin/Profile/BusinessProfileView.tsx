@@ -14,10 +14,11 @@ import {
 } from 'lucide-react';
 import { BusinessProfile } from '../../../types/menu';
 import { ProfileCompletionCard } from './ProfileCompletionCard';
-import { uploadImageToSupabase } from '../../../utils/imageUpload';
+import { uploadImageToSupabase, deleteImageFromSupabase } from '../../../utils/imageUpload';
 import { resolveLogoUrl } from '../../../utils/imageResolver';
 import { formatWhatsAppUrl } from '../../../utils/profileCompletion';
 import { WhatsAppBrandIcon, GoogleReviewBrandIcon } from '../../common/MenuIcons';
+import { countWords, MAX_BUSINESS_DESCRIPTION_WORDS } from '../../../utils/wordCount';
 
 interface BusinessProfileViewProps {
   business: BusinessProfile;
@@ -37,6 +38,7 @@ export function BusinessProfileView({
   const [phone, setPhone] = useState(business.phone || '');
   const [email, setEmail] = useState(business.email || '');
   const [address, setAddress] = useState(business.address || '');
+  const [description, setDescription] = useState(business.description || '');
 
   // Native Time Input States
   const [openingTime, setOpeningTime] = useState(business.openingTime || '11:30');
@@ -84,6 +86,7 @@ export function BusinessProfileView({
     setPhone(business.phone || '');
     setEmail(business.email || '');
     setAddress(business.address || '');
+    setDescription(business.description || '');
     setOpeningTime(business.openingTime || '11:30');
     setClosingTime(business.closingTime || '23:00');
     setWorkingDays(business.workingDays || 'All 7 Days');
@@ -135,6 +138,7 @@ export function BusinessProfileView({
       phone.trim() !== (initialSnapshot.phone || '').trim() ||
       email.trim() !== (initialSnapshot.email || '').trim() ||
       address.trim() !== (initialSnapshot.address || '').trim() ||
+      description.trim() !== (initialSnapshot.description || '').trim() ||
       openingTime.trim() !== (initialSnapshot.openingTime || '11:30').trim() ||
       closingTime.trim() !== (initialSnapshot.closingTime || '23:00').trim() ||
       workingDays.trim() !== (initialSnapshot.workingDays || 'All 7 Days').trim() ||
@@ -145,7 +149,7 @@ export function BusinessProfileView({
       googleReviewUrl.trim() !== (initialSnapshot.googleReviewUrl || '').trim()
     );
   }, [
-    name, location, phone, email, address, openingTime, closingTime, workingDays,
+    name, location, phone, email, address, description, openingTime, closingTime, workingDays,
     instagram, facebook, whatsappInput, website, googleReviewUrl,
     pendingLogoFile, isLogoRemovedPending, initialSnapshot
   ]);
@@ -208,6 +212,11 @@ export function BusinessProfileView({
       return;
     }
 
+    if (countWords(description) > MAX_BUSINESS_DESCRIPTION_WORDS) {
+      setError(`Business description must be ${MAX_BUSINESS_DESCRIPTION_WORDS} words or fewer.`);
+      return;
+    }
+
     try {
       setIsSaving(true);
       setError(null);
@@ -242,6 +251,7 @@ export function BusinessProfileView({
         phone: phone.trim(),
         email: email.trim(),
         address: address.trim(),
+        description: description.trim(),
         openingHours: computedOpeningHours,
         openingTime: openingTime.trim(),
         closingTime: closingTime.trim(),
@@ -258,6 +268,12 @@ export function BusinessProfileView({
 
       // 2. Persist to Firestore
       await onUpdateBusiness(updatePayload);
+
+      // 3. Safely delete old logo object from Supabase if a new logo was uploaded or removed
+      const oldStorageKey = initialSnapshot.logoStorageKey;
+      if (oldStorageKey && oldStorageKey !== finalLogoStorageKey) {
+        deleteImageFromSupabase(oldStorageKey).catch(() => {});
+      }
 
       // Clean up object URL after successful save
       if (pendingLogoPreview) {
@@ -491,6 +507,38 @@ export function BusinessProfileView({
               />
             </div>
 
+            {/* Business Description */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                  Business Description (Customer About)
+                </label>
+                <span className={`text-[11px] font-semibold ${countWords(description) > MAX_BUSINESS_DESCRIPTION_WORDS ? 'text-red-600 font-bold' : 'text-gray-400'}`}>
+                  {countWords(description)} / {MAX_BUSINESS_DESCRIPTION_WORDS} words
+                </span>
+              </div>
+              <textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe your restaurant, heritage recipes, dining experience, or chef specialties..."
+                className={`w-full px-3.5 py-2 rounded-xl border ${
+                  countWords(description) > MAX_BUSINESS_DESCRIPTION_WORDS
+                    ? 'border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/30'
+                    : 'border-gray-200 focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20'
+                } text-sm text-gray-900 outline-none resize-none`}
+              />
+              {countWords(description) > MAX_BUSINESS_DESCRIPTION_WORDS ? (
+                <p className="text-[11px] font-bold text-red-600 mt-1">
+                  Please shorten this description to {MAX_BUSINESS_DESCRIPTION_WORDS} words or fewer.
+                </p>
+              ) : (
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Controls the description displayed on the customer About modal. Leave empty to hide description text.
+                </p>
+              )}
+            </div>
+
             {/* Business Hours & Schedule (Native Time Picker Controls) */}
             <div className="space-y-3 pt-1">
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
@@ -630,9 +678,9 @@ export function BusinessProfileView({
 
             <button
               type="submit"
-              disabled={!hasChanges || isSaving}
+              disabled={!hasChanges || isSaving || countWords(description) > MAX_BUSINESS_DESCRIPTION_WORDS}
               className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all shadow-xs ${
-                hasChanges && !isSaving
+                hasChanges && !isSaving && countWords(description) <= MAX_BUSINESS_DESCRIPTION_WORDS
                   ? 'bg-[#F5B800] hover:bg-[#E5A93C] text-black shadow-md shadow-[#F5B800]/20 active:scale-98 cursor-pointer'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
               }`}

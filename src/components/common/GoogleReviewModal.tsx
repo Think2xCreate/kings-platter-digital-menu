@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Star, ExternalLink, Check, Copy, CheckCircle2, MessageSquareText } from 'lucide-react';
+import { X, Star, Check, Copy, CheckCircle2, MessageSquareText, AlertCircle } from 'lucide-react';
 import { BusinessProfile } from '../../types/menu';
 
 interface GoogleReviewModalProps {
@@ -10,63 +10,70 @@ interface GoogleReviewModalProps {
 }
 
 export function GoogleReviewModal({ isOpen, onClose, business, suggestedFoodName }: GoogleReviewModalProps) {
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(null);
-  const [reviewText, setReviewText] = useState<string>('');
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number | null>(0);
+  const [reviewText, setReviewText] = useState<string>(
+    suggestedFoodName
+      ? `Food semma tasty ah irundhuchu! Loved the ${suggestedFoodName}. Family ah pona comfortable ah irundhuchu.`
+      : 'Food semma tasty ah irundhuchu! Fresh ingredients and authentic taste. Family ah pona comfortable ah irundhuchu.'
+  );
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [copyError, setCopyError] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
   const reviewSuggestions = [
     suggestedFoodName
-      ? `Loved the ${suggestedFoodName}! The flavours were authentic, staff was courteous, and table service was fast. Highly recommended!`
-      : 'The food was delicious and full of flavour. Staff were polite and service was quick. Great place for dining with family in Tirunelveli!',
-    'Loved the authentic biriyani and starters! Piping hot food, royal taste, and very clean dining ambience.',
-    'Super tasty dishes and generous portions. The clay-oven appetizers and cold frappes were fantastic!',
-    'One of our favourite dining spots in Tirunelveli. Fresh ingredients, great presentation, and very friendly hospitality.',
-    'Exquisite flavours and great hospitality. The seafood platter and gravies were cooked to perfection.',
-    'Wonderful atmosphere and delicious food at reasonable prices. Definitely visiting again with friends!',
-    'Great digital menu experience and swift table service. Every dish ordered was fresh and flavourful.',
+      ? `Food semma tasty ah irundhuchu! Loved the ${suggestedFoodName}. Family ah pona comfortable ah irundhuchu.`
+      : 'Food semma tasty ah irundhuchu! Fresh ingredients and authentic taste. Family ah pona comfortable ah irundhuchu.',
+    'Biriyani nalla flavour ah irundhuchu! Piping hot food, royal taste, and very clean dining ambience.',
+    'Super tasty starters and generous portions. Ambience romba nice ah irundhuchu!',
+    'One of our favourite dining spots in Tirunelveli. Quick table service and polite hospitality.',
+    'Good food and great value. Starters and gravies were cooked to perfection!',
+    'Wonderful atmosphere with delicious food. Definitely visiting again with friends!',
   ];
 
   const handleSelectSuggestion = (text: string, index: number) => {
     setSelectedSuggestionIndex(index);
     setReviewText(text);
+    setCopyError(false);
   };
 
-  const handleContinueToGoogle = () => {
-    const textToCopy = reviewText.trim() || (selectedSuggestionIndex !== null ? reviewSuggestions[selectedSuggestionIndex] : '');
-    
-    if (textToCopy && navigator.clipboard) {
-      navigator.clipboard.writeText(textToCopy).catch(() => {
-        // clipboard write fallback
-      });
-      setIsCopied(true);
+  const handleContinueToGoogle = async () => {
+    const textToCopy = reviewText.trim();
+    setCopyError(false);
+
+    if (textToCopy) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(textToCopy);
+          setIsCopied(true);
+        } else {
+          setCopyError(true);
+        }
+      } catch {
+        setCopyError(true);
+      }
     }
 
-    const targetUrl = business.googleReviewUrl?.trim();
-    if (targetUrl) {
-      // Brief delay to let the user see the copied state before opening the review tab
+    const targetUrl = business.googleReviewUrl?.trim() || 'https://search.google.com/local/writereview?placeid=ChIJrzeECyrPBjsRK1OB2iwAL_4';
+    
+    setTimeout(() => {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
       setTimeout(() => {
-        window.open(targetUrl, '_blank', 'noopener,noreferrer');
-        setTimeout(() => {
-          setIsCopied(false);
-          onClose();
-        }, 800);
-      }, 400);
-    } else {
-      setIsCopied(false);
-      onClose();
-    }
+        setIsCopied(false);
+        onClose();
+      }, 800);
+    }, 500);
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md transition-opacity duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div 
+      <div
         className="w-full sm:max-w-lg max-h-[92vh] bg-[#121217] border border-[#282833] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 text-[#EDEDF2]"
         role="dialog"
         aria-modal="true"
@@ -98,13 +105,13 @@ export function GoogleReviewModal({ isOpen, onClose, business, suggestedFoodName
             Share Your Dining Experience
           </h2>
           <p className="text-xs text-[#9E9EA8] mt-1">
-            Choose a review that matches your experience, personalize it if you wish, and post it to Google.
+            Choose a suggestion below or personalize your review before posting to Google.
           </p>
         </div>
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          
+
           {/* Step 1: Select a Suggestion */}
           <div>
             <label className="text-xs font-bold text-[#A6A6B5] uppercase tracking-wider block mb-2.5">
@@ -156,23 +163,30 @@ export function GoogleReviewModal({ isOpen, onClose, business, suggestedFoodName
               rows={3}
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
-              placeholder="Select a suggestion above or write your own review here..."
+              placeholder="Write your review here..."
               className="w-full p-3 text-xs sm:text-sm rounded-xl bg-[#16161D] border border-[#2B2B38] text-white placeholder-[#686878] focus:outline-none focus:border-[#E5A93C] focus:ring-1 focus:ring-[#E5A93C] transition-colors leading-relaxed"
             />
           </div>
 
-          {/* Step 3: Help Note */}
+          {/* Step 3: Feedback Messages */}
           <div className="p-3 rounded-xl bg-[#171720] border border-[#272733] text-xs text-[#9E9EAA] flex items-start gap-2">
             <Copy className="w-4 h-4 text-[#E5A93C] shrink-0 mt-0.5" />
             <span>
-              When you tap <strong>Continue to Google</strong>, your review will be automatically copied to your clipboard so you can easily paste it.
+              Tapping <strong>Continue</strong> copies your review text to clipboard and opens Google Reviews.
             </span>
           </div>
 
           {isCopied && (
             <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-600/60 text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Review copied to clipboard! Opening Google Reviews...</span>
+              <span>Review copied to clipboard! Redirecting to Google Reviews...</span>
+            </div>
+          )}
+
+          {copyError && (
+            <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-600/60 text-amber-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Review couldn't be copied automatically. Please copy it manually.</span>
             </div>
           )}
         </div>
@@ -197,12 +211,11 @@ export function GoogleReviewModal({ isOpen, onClose, business, suggestedFoodName
                 : 'bg-[#22222A] text-[#606070] cursor-not-allowed border border-[#2C2C38]'
             }`}
           >
-            <Star className="w-4 h-4 fill-current" />
-            <span>Continue to Google</span>
-            <ExternalLink className="w-3.5 h-3.5 ml-0.5" />
+            <span>Continue</span>
           </button>
         </div>
       </div>
     </div>
   );
 }
+

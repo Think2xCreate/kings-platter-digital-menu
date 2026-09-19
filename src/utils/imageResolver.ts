@@ -22,8 +22,8 @@ export function resolveImageUrl(imageUrl?: string | null, fallback: string = DEF
     return fallback;
   }
 
-  // Allowed local static public assets
-  if (trimmed === DEFAULT_FALLBACK_IMAGE || trimmed === DEFAULT_LOGO_IMAGE) {
+  // Allowed local static public assets (paths starting with '/')
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
     return trimmed;
   }
 

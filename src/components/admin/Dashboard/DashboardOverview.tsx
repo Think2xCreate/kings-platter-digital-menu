@@ -2,12 +2,9 @@ import React from 'react';
 import { 
   LayoutGrid, 
   UtensilsCrossed, 
-  BadgePercent, 
-  CheckCircle2, 
-  Plus, 
+  BadgePercent,  
   Edit3,
   Calendar,
-  Sparkles
 } from 'lucide-react';
 import { Category, FoodItem, BusinessProfile } from '../../../types/menu';
 import { CrownIcon } from '../../common/MenuIcons';

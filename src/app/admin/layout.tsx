@@ -100,22 +100,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     else if (tab === 'profile') router.push('/admin/business-profile');
   }, [router]);
 
-  // Auth verification
+  // Auth verification & session expiration listener
   useEffect(() => {
     if (pathname === '/admin/login') {
       setIsCheckingAuth(false);
       return;
     }
 
-    if (!adminAuth.isAuthenticated()) {
+    const unsubListener = adminAuth.initAuthListener((firebaseUser) => {
+      if (!firebaseUser && !adminAuth.getStoredUser()) {
+        router.replace('/admin/login');
+      } else {
+        setCurrentUser(adminAuth.getCurrentUser());
+        setIsCheckingAuth(false);
+      }
+    });
+
+    adminAuth.onSessionExpired(() => {
+      setCurrentUser(null);
+      router.replace('/admin/login?expired=true');
+    });
+
+    if (!adminAuth.getStoredUser()) {
       router.replace('/admin/login');
     } else {
       setCurrentUser(adminAuth.getCurrentUser());
       setIsCheckingAuth(false);
     }
+
+    return () => {
+      unsubListener();
+    };
   }, [pathname, router]);
 
-  // Data loading handler
+  // Data loading handler with 401/403 unauthorized handling
   const loadData = useCallback(async () => {
     try {
       const [cats, items, prof] = await Promise.all([
@@ -126,8 +144,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setCategories(Array.isArray(cats) ? cats : []);
       setFoodItems(Array.isArray(items) ? items : []);
       if (prof) setBusiness(prof);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load admin data:', error);
+      if (error instanceof Error && (error.message.includes('UNAUTHORIZED') || error.message.includes('401') || error.message.includes('403'))) {
+        adminAuth.notifySessionExpired();
+      }
     } finally {
       setIsLoadingData(false);
     }

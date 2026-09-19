@@ -4,11 +4,12 @@ import { adminAuth, AdminUser } from '../../services/adminAuth';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
+  isExpired?: boolean;
   onSuccess: (user: AdminUser) => void;
   onCancel: () => void;
 }
 
-export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModalProps) {
+export function AdminLoginModal({ isOpen, isExpired, onSuccess, onCancel }: AdminLoginModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -79,6 +80,12 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
             Sign in with administrative credentials to manage your digital menu
           </p>
         </div>
+
+        {isExpired && !error && (
+          <div className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-center">
+            Your session has expired. Please sign in again.
+          </div>
+        )}
 
         {error && (
           <div className="p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium text-center">

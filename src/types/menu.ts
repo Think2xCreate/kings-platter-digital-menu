@@ -3,6 +3,7 @@ export interface BusinessProfile {
   name: string;
   subName: string;
   tagline: string;
+  description?: string;
   location: string;
   address: string;
   phone: string;
@@ -27,6 +28,8 @@ export interface BusinessProfile {
 
 export type DietaryType = 'veg' | 'non-veg' | 'egg' | 'vegan';
 
+export type PricingType = 'SINGLE_PRICE' | 'VEG_NON_VEG' | 'PORTION' | 'CUSTOM_VARIANTS';
+
 export interface FoodVariant {
   id: string;
   label: string;
@@ -40,8 +43,14 @@ export interface FoodItem {
   name: string;
   description: string;
   price: number;
+  pricingType?: PricingType;
+  vegPrice?: number;
+  nonVegPrice?: number;
   originalPrice?: number;
   discountPercentage?: number;
+  offerType?: 'PERCENTAGE' | 'FIXED';
+  offerValue?: number;
+  offerEnabled?: boolean;
   finalPrice: number;
   imageUrl: string;
   imageStorageKey?: string;
@@ -67,6 +76,7 @@ export interface Category {
   imageUrl?: string;
   imageStorageKey?: string;
   description?: string;
+  defaultPricingType?: PricingType;
   displayOrder: number;
   isActive: boolean;
   itemCount?: number;
@@ -74,7 +84,7 @@ export interface Category {
   updatedAt?: string;
 }
 
-export type DietaryFilter = 'all' | 'veg' | 'non-veg' | 'popular' | 'special';
+export type DietaryFilter = 'all' | 'offers' | 'veg' | 'non-veg' | 'popular' | 'special';
 
 export interface AdminUser {
   uid: string;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone } from 'lucide-react';
+import { Phone, Info } from 'lucide-react';
 import { BusinessProfile } from '../../types/menu';
 import { CrownIcon, CartNavIcon } from '../common/MenuIcons';
 import { resolveLogoUrl } from '../../utils/imageResolver';
@@ -101,15 +101,6 @@ export function BusinessHeader({
 
           {/* Desktop Right Info */}
           <div className="hidden lg:flex items-center gap-4">
-            {/* Phone */}
-            {/* <a
-              href={`tel:${business.phone}`}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#E5E5ED] hover:text-[#E5A93C] transition-colors bg-[#1A1A20] px-3.5 py-2 rounded-full border border-[#2B2B35]"
-            >
-              <Phone className="w-3.5 h-3.5 text-[#E5A93C]" />
-              <span>{business.phone}</span>
-            </a> */}
-
             {/* Selected Dishes Drawer Toggle */}
             {onOpenCart && (
               <button
@@ -129,13 +120,23 @@ export function BusinessHeader({
           </div>
 
           {/* Mobile Right Actions */}
-          <div className="flex lg:hidden items-center gap-2">
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenAboutModal}
+              aria-label="About restaurant"
+              className="flex items-center gap-1 px-3 py-2 min-h-[44px] min-w-[44px] rounded-xl bg-[#18181D] border border-[#292933] text-[#E5A93C] hover:text-white transition-colors cursor-pointer text-xs font-bold shrink-0"
+            >
+              <Info className="w-4 h-4 text-[#E5A93C]" />
+              <span>About</span>
+            </button>
+
             {onOpenCart && (
               <button
                 type="button"
                 onClick={onOpenCart}
                 aria-label="View selected dishes"
-                className="relative p-2 rounded-lg bg-[#18181D] border border-[#292933] text-[#E5A93C] hover:text-white transition-colors cursor-pointer"
+                className="relative flex items-center justify-center min-h-[44px] min-w-[44px] p-2 rounded-xl bg-[#18181D] border border-[#292933] text-[#E5A93C] hover:text-white transition-colors cursor-pointer shrink-0"
               >
                 <CartNavIcon className="w-4 h-4" />
                 {cartCount > 0 && (
@@ -145,14 +146,6 @@ export function BusinessHeader({
                 )}
               </button>
             )}
-
-            <a
-              href={`tel:${business.phone}`}
-              aria-label="Call restaurant"
-              className="p-2 rounded-lg bg-[#18181D] border border-[#292933] text-[#E5A93C] hover:text-white transition-colors"
-            >
-              <Phone className="w-4 h-4" />
-            </a>
           </div>
 
         </div>
@@ -160,3 +153,4 @@ export function BusinessHeader({
     </header>
   );
 }
+

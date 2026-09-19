@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Sparkles } from 'lucide-react';
+import { Search, X, Star, Flame } from 'lucide-react';
 import { DietaryFilter } from '../../types/menu';
 
 interface SearchAndFilterBarProps {
@@ -57,6 +57,19 @@ export function SearchAndFilterBar({
 
         <button
           type="button"
+          onClick={() => onDietaryFilterChange('offers')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+            dietaryFilter === 'offers'
+              ? 'bg-[#E5A93C] text-black border-[#E5A93C] shadow-sm font-bold'
+              : 'bg-[#18181D] text-[#F5BE58] border-[#E5A93C]/40 hover:bg-[#E5A93C]/10'
+          }`}
+        >
+          <Flame className="w-3.5 h-3.5 fill-[#E5A93C] text-[#E5A93C]" />
+          Offers
+        </button>
+
+        <button
+          type="button"
           onClick={() => onDietaryFilterChange('veg')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
             dietaryFilter === 'veg'
@@ -90,7 +103,7 @@ export function SearchAndFilterBar({
               : 'bg-[#18181D] text-[#90909E] border-[#292933] hover:text-[#F5BE58]'
           }`}
         >
-          <Sparkles className="w-3 h-3 text-[#E5A93C]" />
+          <Star className="w-3 h-3 text-[#E5A93C]" />
           Popular
         </button>
       </div>

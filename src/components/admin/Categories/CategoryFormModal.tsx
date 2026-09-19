@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { X, Upload, Image as ImageIcon } from 'lucide-react';
-import { Category } from '../../../types/menu';
-
-import { uploadImageToSupabase } from '../../../utils/imageUpload';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Upload, Image as ImageIcon, Loader2, CheckCircle2 } from 'lucide-react';
+import { Category, PricingType } from '../../../types/menu';
+import { uploadImageToSupabase, deleteImageFromSupabase } from '../../../utils/imageUpload';
+import { resolveImageUrl } from '../../../utils/imageResolver';
+import { countWords, MAX_CATEGORY_DESCRIPTION_WORDS } from '../../../utils/wordCount';
 
 interface CategoryFormModalProps {
   isOpen: boolean;
@@ -21,18 +22,35 @@ export function CategoryFormModal({
 }: CategoryFormModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [defaultPricingType, setDefaultPricingType] = useState<PricingType>('SINGLE_PRICE');
   const [displayOrder, setDisplayOrder] = useState<number>(1);
   const [isActive, setIsActive] = useState(true);
+  
+  // Image Upload States
   const [imageUrl, setImageUrl] = useState('');
+  const [imageStorageKey, setImageStorageKey] = useState('');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [imageStorageKey, setImageStorageKey] = useState('');
+  const previewObjectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewObjectUrlRef.current) {
+        URL.revokeObjectURL(previewObjectUrlRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (initialData && mode === 'edit') {
       setName(initialData.name || '');
       setDescription(initialData.description || '');
+      setDefaultPricingType(initialData.defaultPricingType || 'SINGLE_PRICE');
       setDisplayOrder(initialData.displayOrder || 1);
       setIsActive(initialData.isActive !== false);
       setImageUrl(initialData.imageUrl || '');
@@ -40,17 +58,25 @@ export function CategoryFormModal({
     } else {
       setName('');
       setDescription('');
+      setDefaultPricingType('SINGLE_PRICE');
       setDisplayOrder(1);
       setIsActive(true);
       setImageUrl('');
       setImageStorageKey('');
     }
+
+    setPendingFile(null);
+    if (pendingPreview) {
+      URL.revokeObjectURL(pendingPreview);
+      setPendingPreview(null);
+    }
+    setUploadStatus('idle');
     setError(null);
   }, [initialData, mode, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -60,18 +86,15 @@ export function CategoryFormModal({
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      setError(null);
-      const res = await uploadImageToSupabase(file, 'categories');
-      setImageUrl(res.url);
-      setImageStorageKey(res.path || '');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to upload image.';
-      setError(msg);
-    } finally {
-      setIsSubmitting(false);
+    if (pendingPreview) {
+      URL.revokeObjectURL(pendingPreview);
     }
+    const localUrl = URL.createObjectURL(file);
+    previewObjectUrlRef.current = localUrl;
+    setPendingPreview(localUrl);
+    setPendingFile(file);
+    setUploadStatus('idle');
+    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,20 +104,50 @@ export function CategoryFormModal({
       return;
     }
 
+    if (countWords(description) > MAX_CATEGORY_DESCRIPTION_WORDS) {
+      setError(`Category description must be ${MAX_CATEGORY_DESCRIPTION_WORDS} words or fewer.`);
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setError(null);
+
+      let finalImageUrl = imageUrl;
+      let finalStorageKey = imageStorageKey;
+      const oldStorageKey = initialData?.imageStorageKey;
+
+      if (pendingFile) {
+        setUploadStatus('uploading');
+        try {
+          const res = await uploadImageToSupabase(pendingFile, 'categories');
+          finalImageUrl = res.url;
+          finalStorageKey = res.path;
+          setUploadStatus('success');
+        } catch (uploadErr: unknown) {
+          const msg = uploadErr instanceof Error ? uploadErr.message : 'Category image upload failed.';
+          setUploadStatus('error');
+          setError(`Upload Error: ${msg}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
 
       await onSubmit({
         name: name.trim(),
         slug: name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
         iconName: 'Soup',
         description: description.trim(),
+        defaultPricingType,
         displayOrder: Number(displayOrder) || 1,
         isActive,
-        imageUrl: imageUrl.trim(),
-        imageStorageKey: imageStorageKey.trim(),
+        imageUrl: finalImageUrl.trim(),
+        imageStorageKey: finalStorageKey.trim(),
       });
+
+      if (pendingFile && oldStorageKey && oldStorageKey !== finalStorageKey) {
+        deleteImageFromSupabase(oldStorageKey).catch(() => {});
+      }
 
       onClose();
     } catch (err: unknown) {
@@ -104,6 +157,8 @@ export function CategoryFormModal({
       setIsSubmitting(false);
     }
   };
+
+  const previewDisplayUrl = pendingPreview || resolveImageUrl(imageUrl);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -124,7 +179,7 @@ export function CategoryFormModal({
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
               {mode === 'create' 
-                ? 'Create a new section for your digital menu'
+                ? 'Create a new category for your digital menu'
                 : 'Update category details and display sequence'
               }
             </p>
@@ -144,7 +199,7 @@ export function CategoryFormModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
               {error}
             </div>
           )}
@@ -155,26 +210,37 @@ export function CategoryFormModal({
               Category Image
             </label>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center relative">
-                {imageUrl ? (
-                  <img src={imageUrl} alt="Category Preview" className="w-full h-full object-cover" />
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-xs">
+                {previewDisplayUrl ? (
+                  <img src={previewDisplayUrl} alt="Category Preview" className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon className="w-6 h-6 text-gray-400" />
+                )}
+
+                {uploadStatus === 'uploading' && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
+                  </div>
+                )}
+                {uploadStatus === 'success' && (
+                  <div className="absolute top-1 right-1 bg-emerald-500 text-white p-0.5 rounded-full">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
                 )}
               </div>
 
               <div className="flex-1">
                 <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-800 cursor-pointer transition-colors">
-                  <Upload className="w-3.5 h-3.5 text-gray-600" />
-                  <span>Choose Image File</span>
+                  <Upload className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{pendingFile ? 'Change Photo' : 'Choose Category Image'}</span>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageFileChange}
+                    onChange={handleFileSelect}
                     className="hidden"
                   />
                 </label>
-                <p className="text-[11px] text-gray-400 mt-1">PNG, JPG, or WEBP up to 5MB</p>
+                <p className="text-[11px] text-gray-400 mt-1">WEBP, PNG, JPG up to 5MB</p>
               </div>
             </div>
           </div>
@@ -189,23 +255,53 @@ export function CategoryFormModal({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Appetizers, Seafood, Desserts"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
+              placeholder="e.g. Biriyani and Mandi, Seafood, Desserts"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
             />
+          </div>
+
+          {/* Default Pricing Format for Category */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+              Default Category Pricing Mode
+            </label>
+            <select
+              value={defaultPricingType}
+              onChange={(e) => setDefaultPricingType(e.target.value as PricingType)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 outline-none bg-white font-medium"
+            >
+              <option value="SINGLE_PRICE">Single Price (Standard)</option>
+              <option value="VEG_NON_VEG">Veg / Non-Veg Options</option>
+              <option value="CUSTOM_VARIANTS">Portions & Custom Variants (Half, Full, Mandi)</option>
+            </select>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
-              Description
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                Description
+              </label>
+              <span className={`text-[11px] font-semibold ${countWords(description) > MAX_CATEGORY_DESCRIPTION_WORDS ? 'text-red-600 font-bold' : 'text-gray-400'}`}>
+                {countWords(description)} / {MAX_CATEGORY_DESCRIPTION_WORDS} words
+              </span>
+            </div>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description of the items in this category..."
-              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all resize-none"
+              className={`w-full px-4 py-2 rounded-xl border ${
+                countWords(description) > MAX_CATEGORY_DESCRIPTION_WORDS
+                  ? 'border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/30'
+                  : 'border-gray-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500'
+              } text-sm text-gray-900 placeholder-gray-400 outline-none transition-all resize-none`}
             />
+            {countWords(description) > MAX_CATEGORY_DESCRIPTION_WORDS && (
+              <p className="text-[11px] font-bold text-red-600 mt-1">
+                Please shorten this description to {MAX_CATEGORY_DESCRIPTION_WORDS} words or fewer.
+              </p>
+            )}
           </div>
 
           {/* Display Order and Status */}
@@ -219,7 +315,7 @@ export function CategoryFormModal({
                 min={1}
                 value={displayOrder}
                 onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 1)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#F5B800] focus:ring-2 focus:ring-[#F5B800]/20 text-sm text-gray-900 outline-none transition-all"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-amber-500 text-sm text-gray-900 outline-none transition-all"
               />
             </div>
 
@@ -261,10 +357,11 @@ export function CategoryFormModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-[#F5B800] hover:bg-[#E5A93C] text-black font-bold text-sm shadow-md shadow-[#F5B800]/20 active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
+              disabled={isSubmitting || countWords(description) > MAX_CATEGORY_DESCRIPTION_WORDS}
+              className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm shadow-md shadow-amber-500/20 active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
             >
-              {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Category' : 'Save Changes'}
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin text-black" />}
+              <span>{isSubmitting ? 'Saving Category...' : mode === 'create' ? 'Create Category' : 'Save Changes'}</span>
             </button>
           </div>
 
@@ -273,3 +370,4 @@ export function CategoryFormModal({
     </div>
   );
 }
+

@@ -19,6 +19,7 @@ import { GoogleReviewModal } from '../common/GoogleReviewModal';
 import { AboutModal } from './AboutModal';
 import { BrandLoader } from '../common/BrandLoader';
 import { EmptySearchState, ErrorState } from './MenuStates';
+import { isOfferValid } from '../../utils/pricing';
 
 interface CustomerMenuViewProps {
   initialCategorySlug?: string;
@@ -189,6 +190,9 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
     const safeItems = Array.isArray(foodItems) ? foodItems : [];
 
     return safeItems.filter(item => {
+      if (dietaryFilter === 'offers' && !isOfferValid(item)) {
+        return false;
+      }
       if (dietaryFilter === 'veg' && item.dietary !== 'veg' && item.dietary !== 'vegan') {
         return false;
       }

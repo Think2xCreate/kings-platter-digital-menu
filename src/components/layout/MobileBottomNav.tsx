@@ -101,7 +101,7 @@ export function MobileBottomNav({
           <span className={`text-[10px] font-semibold mt-1 tracking-tight ${
             activeTab === 'cart' ? 'text-[#E5A93C] font-bold' : 'text-[#8E8E9B]'
           }`}>
-            Order
+            Choose 
           </span>
         </button>
 
