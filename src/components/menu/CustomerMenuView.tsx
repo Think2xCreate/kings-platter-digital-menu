@@ -41,7 +41,7 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
   const [searchQuery, setSearchQuery] = useState('');
   const [dietaryFilter, setDietaryFilter] = useState<DietaryFilter>('all');
   const [selectedFoodItem, setSelectedFoodItem] = useState<FoodItem | null>(null);
-  
+
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isShowcaseOpen, setIsShowcaseOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -232,7 +232,7 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
 
   const groupedSections = useMemo(() => {
     if (!Array.isArray(categories) || categories.length === 0) return [];
-    
+
     return categories
       .map(cat => {
         const items = filteredFoodItems.filter(item => item.categoryId === cat.id);
@@ -267,7 +267,7 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
           isLoading={isLoading}
           variant="customer"
           restaurantName={business?.name || "KING'S PLATTER"}
-          subName={business?.subName || "RESTAURANT & CAFE"}
+          subName={business?.subName || "RESTAURANT"}
           tagline={business?.tagline || "Great Food · Royal Experience"}
           error={error}
           onRetry={loadMenuData}
@@ -301,7 +301,7 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
 
           <main className="flex-1 w-full px-2 sm:px-4 lg:px-8 pt-3 sm:pt-6 pb-24 lg:pb-12">
             <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
-              
+
               <div className="hidden lg:block lg:col-span-3 xl:col-span-3 sticky top-24 z-30 self-start">
                 <div className="bg-[#131317] border border-[#24242C] rounded-2xl p-3 shadow-xl max-h-[calc(100vh-7rem)] overflow-y-auto no-scrollbar">
                   <div className="px-3 py-2 border-b border-[#24242C] mb-2 flex items-center justify-between">

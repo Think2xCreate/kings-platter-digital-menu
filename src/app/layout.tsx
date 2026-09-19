@@ -3,10 +3,10 @@ import '../index.css';
 
 export const metadata: Metadata = {
   title: "KING'S PLATTER — QR Digital Restaurant Menu",
-  description: "Experience royal dining at King's Platter Restaurant & Cafe. Browse our premium digital menu, appetizers, chef specials, seafood, and desserts.",
+  description: "Experience royal dining at King's Platter RESTAURANT. Browse our premium digital menu, appetizers, chef specials, seafood, and desserts.",
   openGraph: {
     title: "KING'S PLATTER — QR Digital Restaurant Menu",
-    description: "Great Food | Royal Experience at King's Platter Restaurant & Cafe.",
+    description: "Great Food | Royal Experience at King's Platter RESTAURANT.",
     type: 'website',
   },
   robots: {

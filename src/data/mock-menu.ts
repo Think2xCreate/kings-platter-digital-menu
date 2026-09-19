@@ -3,7 +3,7 @@ import { BusinessProfile, Category, FoodItem } from '../types/menu';
 export const mockBusinessProfile: BusinessProfile = {
   id: 'kings-platter-tirunelveli',
   name: "KING'S PLATTER",
-  subName: 'RESTAURANT & CAFE',
+  subName: 'RESTAURANT',
   tagline: 'Great Food | Royal Experience',
   location: 'Tirunelveli',
   address: 'No. 42, Royal Avenue, South Bypass Road, Tirunelveli, Tamil Nadu 627005',

@@ -9,7 +9,7 @@ export interface DeleteResult {
 export interface IMenuRepository {
   getBusinessProfile(): Promise<BusinessProfile>;
   updateBusinessProfile(data: Partial<BusinessProfile>): Promise<BusinessProfile>;
-  
+
   getCategories(includeInactive?: boolean): Promise<Category[]>;
   getCategory(id: string): Promise<Category | null>;
   createCategory(data: Omit<Category, 'id' | 'itemCount'>): Promise<Category>;
@@ -39,7 +39,7 @@ const STORAGE_KEYS = {
 const DEFAULT_PROFILE: BusinessProfile = {
   id: 'kings-platter-tirunelveli',
   name: "KING'S PLATTER",
-  subName: 'RESTAURANT & CAFE',
+  subName: 'RESTAURANT',
   tagline: 'Great Food | Royal Experience',
   location: 'Tirunelveli',
   address: 'No. 42, Royal Avenue, South Bypass Road, Tirunelveli, Tamil Nadu 627005',
@@ -179,8 +179,8 @@ export class PersistentMenuRepository implements IMenuRepository {
       // fallback to cached
     }
 
-    const list = includeInactive 
-      ? [...this.categories] 
+    const list = includeInactive
+      ? [...this.categories]
       : this.categories.filter(c => c.isActive);
 
     const sorted = list.sort((a, b) => a.displayOrder - b.displayOrder);

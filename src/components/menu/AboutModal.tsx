@@ -53,8 +53,8 @@ export function AboutModal({ business, isOpen, onClose }: AboutModalProps) {
       ? business.whatsapp
       : `https://wa.me/${business.whatsapp.replace(/\D/g, '')}`
     : business.whatsappNumber
-    ? `https://wa.me/${business.whatsappNumber.replace(/\D/g, '')}`
-    : '';
+      ? `https://wa.me/${business.whatsappNumber.replace(/\D/g, '')}`
+      : '';
 
   const hasPhone = Boolean(business.phone && business.phone.trim());
   const hasEmail = Boolean(business.email && business.email.trim());
@@ -90,10 +90,10 @@ export function AboutModal({ business, isOpen, onClose }: AboutModalProps) {
         {/* Scrollable Modal Content */}
         <div className="overflow-y-auto pr-1 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
+
             {/* LEFT COLUMN: Logo, Description, 4 Badges, Socials, Address */}
             <div className="lg:col-span-7 space-y-5">
-              
+
               {/* Logo + Title Header */}
               <div className="flex items-start gap-4">
                 {/* 9:16 Aspect Ratio Logo Container */}
@@ -110,7 +110,7 @@ export function AboutModal({ business, isOpen, onClose }: AboutModalProps) {
                     {business.name || "King's Platter"}
                   </h2>
                   <p className="text-sm font-semibold text-gray-600 mt-0.5">
-                    {business.subName || 'Restaurant & Cafe'}
+                    {business.subName || 'RESTAURANT'}
                   </p>
 
                   {business.description && business.description.trim() !== '' && (
@@ -250,7 +250,7 @@ export function AboutModal({ business, isOpen, onClose }: AboutModalProps) {
 
             {/* RIGHT COLUMN: Interior Photo, Details Cards & Brand Quote */}
             <div className="lg:col-span-5 space-y-4">
-              
+
               {/* Restaurant Hero / Interior Image */}
               <div className="w-full aspect-[16/10] rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative bg-gray-900">
                 <img
