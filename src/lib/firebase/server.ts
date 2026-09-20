@@ -3,9 +3,19 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth, Auth } from 'firebase-admin/auth';
 import { getStorage, Storage } from 'firebase-admin/storage';
 
+function getPrivateKey(): string | undefined {
+  const rawKey =
+    process.env.FIREBASE_PRIVATE_KEY ||
+    (process.env.FIREBASE_PRIVATE_KEY_PART1 && process.env.FIREBASE_PRIVATE_KEY_PART2
+      ? process.env.FIREBASE_PRIVATE_KEY_PART1 + process.env.FIREBASE_PRIVATE_KEY_PART2
+      : undefined);
+
+  return rawKey ? rawKey.replace(/\\n/g, '\n') : undefined;
+}
+
 export function hasAdminCredentials(): boolean {
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const privateKey = getPrivateKey();
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   return Boolean(serviceAccountKey || (privateKey && clientEmail));
 }
@@ -17,9 +27,7 @@ function getAdminApp(): App {
   }
 
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-    : undefined;
+  const privateKey = getPrivateKey();
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'kings-platter-menu';
 
