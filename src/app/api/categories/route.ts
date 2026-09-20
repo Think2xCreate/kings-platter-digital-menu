@@ -11,7 +11,11 @@ export async function GET(request: NextRequest) {
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
     const categories = await categoryService.getAllCategories(includeInactive);
-    return NextResponse.json({ success: true, data: categories });
+    const response = NextResponse.json({ success: true, data: categories });
+    if (!includeInactive) {
+      response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    }
+    return response;
   } catch (error: unknown) {
     const appErr = mapErrorToAppError(error, "We couldn't load categories. Please try again.");
     return NextResponse.json({ success: false, error: appErr }, { status: 500 });

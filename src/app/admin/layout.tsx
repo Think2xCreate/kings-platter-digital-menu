@@ -107,8 +107,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
+    if (!adminAuth.getStoredUser()) {
+      setIsCheckingAuth(false);
+      router.replace('/admin/login');
+      return;
+    }
+
+    setCurrentUser(adminAuth.getCurrentUser());
+    setIsCheckingAuth(false);
+
     const unsubListener = adminAuth.initAuthListener((firebaseUser) => {
       if (!firebaseUser && !adminAuth.getStoredUser()) {
+        setIsCheckingAuth(false);
         router.replace('/admin/login');
       } else {
         setCurrentUser(adminAuth.getCurrentUser());
@@ -118,15 +128,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     adminAuth.onSessionExpired(() => {
       setCurrentUser(null);
+      setIsCheckingAuth(false);
       router.replace('/admin/login?expired=true');
     });
-
-    if (!adminAuth.getStoredUser()) {
-      router.replace('/admin/login');
-    } else {
-      setCurrentUser(adminAuth.getCurrentUser());
-      setIsCheckingAuth(false);
-    }
 
     return () => {
       unsubListener();
@@ -135,6 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Data loading handler with 401/403 unauthorized handling
   const loadData = useCallback(async () => {
+    if (!adminAuth.getStoredUser()) return;
     try {
       const [cats, items, prof] = await Promise.all([
         menuRepository.getCategories(true),
@@ -155,7 +160,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    if (pathname === '/admin/login') return;
+    if (pathname === '/admin/login' || !adminAuth.getStoredUser()) return;
     loadData();
     const unsubscribe = menuRepository.subscribe(() => {
       loadData();

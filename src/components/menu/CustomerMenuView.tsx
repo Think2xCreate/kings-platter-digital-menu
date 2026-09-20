@@ -18,8 +18,9 @@ import { MobileSearchModal } from './MobileSearchModal';
 import { GoogleReviewModal } from '../common/GoogleReviewModal';
 import { AboutModal } from './AboutModal';
 import { BrandLoader } from '../common/BrandLoader';
-import { EmptySearchState, ErrorState } from './MenuStates';
+import { EmptySearchState, EmptyMenuState, ErrorState } from './MenuStates';
 import { isOfferValid } from '../../utils/pricing';
+import { generateRestaurantJsonLd } from '@/lib/seo';
 
 interface CustomerMenuViewProps {
   initialCategorySlug?: string;
@@ -244,6 +245,10 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
       .filter(group => group.items.length > 0);
   }, [categories, filteredFoodItems]);
 
+  const jsonLd = useMemo(() => {
+    return generateRestaurantJsonLd(business);
+  }, [business]);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -262,6 +267,12 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
 
   return (
     <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
       {!isBrandLoaderFinished && (
         <BrandLoader
           isLoading={isLoading}
@@ -354,7 +365,9 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
                   </div>
                 )}
 
-                {filteredFoodItems.length === 0 && (
+                {foodItems.length === 0 && !searchQuery && dietaryFilter === 'all' ? (
+                  <EmptyMenuState />
+                ) : filteredFoodItems.length === 0 ? (
                   <EmptySearchState
                     query={searchQuery || (dietaryFilter !== 'all' ? dietaryFilter : 'selection')}
                     onReset={() => {
@@ -363,7 +376,7 @@ export function CustomerMenuView({ initialCategorySlug, initialFoodSlug }: Custo
                       handleSelectCategory('all');
                     }}
                   />
-                )}
+                ) : null}
 
                 {activeCategoryId !== 'all' && currentCategory && filteredFoodItems.length > 0 && (
                   <CategoryDedicatedView

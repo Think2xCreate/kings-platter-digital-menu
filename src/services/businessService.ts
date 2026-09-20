@@ -1,22 +1,31 @@
 import { serverDb, hasAdminCredentials } from '../lib/firebase/server';
 import { BusinessProfile } from '../types/menu';
-import { seedInitialDataIfEmpty } from './seedService';
 
 export const businessService = {
-  async getBusinessProfile(): Promise<BusinessProfile> {
+  async getBusinessProfile(): Promise<BusinessProfile | null> {
     if (!hasAdminCredentials()) {
       throw new Error('Firebase Admin credentials not configured on server.');
     }
 
-    await seedInitialDataIfEmpty();
-    const doc = await serverDb.collection('businessProfile').doc('kings-platter-tirunelveli').get();
+    let doc = await serverDb.collection('businessProfile').doc('kings-platter-sivakasi').get();
     if (!doc.exists) {
-      throw new Error('Business profile document not found in Firestore.');
+      doc = await serverDb.collection('businessProfile').doc('kings-platter-tirunelveli').get();
     }
+    if (!doc.exists) {
+      const snap = await serverDb.collection('businessProfile').limit(1).get();
+      if (!snap.empty) {
+        doc = snap.docs[0];
+      }
+    }
+
+    if (!doc.exists) {
+      return null;
+    }
+
     return { id: doc.id, ...doc.data() } as BusinessProfile;
   },
 
-  async updateBusinessProfile(data: Partial<BusinessProfile>): Promise<BusinessProfile> {
+  async updateBusinessProfile(data: Partial<BusinessProfile>): Promise<BusinessProfile | null> {
     if (!hasAdminCredentials()) {
       throw new Error('Firebase Admin credentials not configured on server.');
     }
@@ -26,8 +35,13 @@ export const businessService = {
       updatedAt: new Date().toISOString(),
     };
 
-    await serverDb.collection('businessProfile').doc('kings-platter-tirunelveli').set(updateData, { merge: true });
+    let docRef = serverDb.collection('businessProfile').doc('kings-platter-sivakasi');
+    const existingSnap = await serverDb.collection('businessProfile').limit(1).get();
+    if (!existingSnap.empty) {
+      docRef = existingSnap.docs[0].ref;
+    }
+
+    await docRef.set(updateData, { merge: true });
     return this.getBusinessProfile();
   },
 };
-

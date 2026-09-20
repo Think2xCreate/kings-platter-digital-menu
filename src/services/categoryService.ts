@@ -1,7 +1,6 @@
 import { Query, QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
 import { serverDb, hasAdminCredentials } from '../lib/firebase/server';
 import { Category } from '../types/menu';
-import { seedInitialDataIfEmpty } from './seedService';
 
 export const categoryService = {
   async getAllCategories(includeInactive = false): Promise<Category[]> {
@@ -9,7 +8,6 @@ export const categoryService = {
       throw new Error('Firebase Admin credentials not configured on server.');
     }
 
-    await seedInitialDataIfEmpty();
     let query: Query = serverDb.collection('categories');
     if (!includeInactive) {
       query = query.where('isActive', '==', true);
@@ -24,12 +22,18 @@ export const categoryService = {
 
     categories.sort((a, b) => a.displayOrder - b.displayOrder);
 
-    const foodSnap = await serverDb.collection('foodItems').get();
-    const foodItems = foodSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => d.data());
+    const foodSnap = await serverDb.collection('foodItems').select('categoryId').get();
+    const categoryCounts = new Map<string, number>();
+    foodSnap.docs.forEach((d: QueryDocumentSnapshot<DocumentData>) => {
+      const catId = d.data().categoryId;
+      if (catId) {
+        categoryCounts.set(catId, (categoryCounts.get(catId) || 0) + 1);
+      }
+    });
 
     return categories.map(cat => ({
       ...cat,
-      itemCount: foodItems.filter((item: DocumentData) => item.categoryId === cat.id).length,
+      itemCount: categoryCounts.get(cat.id) || 0,
     }));
   },
 
@@ -38,7 +42,6 @@ export const categoryService = {
       throw new Error('Firebase Admin credentials not configured on server.');
     }
 
-    await seedInitialDataIfEmpty();
     const doc = await serverDb.collection('categories').doc(id).get();
     if (!doc.exists) return null;
     return { id: doc.id, ...doc.data() } as Category;

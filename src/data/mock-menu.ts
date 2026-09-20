@@ -1,24 +1,24 @@
 import { BusinessProfile, Category, FoodItem } from '../types/menu';
 
 export const mockBusinessProfile: BusinessProfile = {
-  id: 'kings-platter-tirunelveli',
+  id: 'kings-platter-sivakasi',
   name: "KING'S PLATTER",
   subName: 'RESTAURANT',
   tagline: 'Great Food | Royal Experience',
-  location: 'Tirunelveli',
-  address: 'No. 42, Royal Avenue, South Bypass Road, Tirunelveli, Tamil Nadu 627005',
-  phone: '+91 98765 43210',
+  location: 'Sivakasi',
+  address: 'Housing Board, Srivilliputhur Main Rd, opposite to Abdul Kalam Library, Sivakasi, Tamil Nadu',
+  phone: '+91 89259 54227',
   email: 'info@kingsplatter.com',
-  whatsappNumber: '+91 98765 43210',
-  whatsapp: 'https://wa.me/919876543210',
-  mapUrl: 'https://maps.google.com/?q=Tirunelveli+Kings+Platter',
+  whatsappNumber: '+91 89259 54227',
+  whatsapp: 'https://wa.me/918925954227',
+  mapUrl: 'https://share.google/xkdrn68kXF2LODuKo',
   openingHours: '11:30 AM - 11:00 PM (All 7 Days)',
   currency: '₹',
   instagram: '',
   facebook: '',
   website: '',
   logoUrl: '/kings_platter_logo.jpg',
-  googleReviewUrl: 'https://search.google.com/local/writereview?placeid=ChIJrzeECyrPBjsRK1OB2iwAL_4',
+  googleReviewUrl: 'https://share.google/xkdrn68kXF2LODuKo',
 };
 
 export const mockCategories: Category[] = [

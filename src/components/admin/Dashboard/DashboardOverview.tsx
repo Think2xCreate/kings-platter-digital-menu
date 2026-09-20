@@ -88,7 +88,7 @@ export function DashboardOverview({
           <div>
             <span className="text-xs text-gray-500 font-medium block">Active Offers</span>
             <span className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
-              {activeOffersCount || 8}
+              {activeOffersCount}
             </span>
           </div>
         </div>

@@ -8,7 +8,9 @@ import { mapErrorToAppError } from '@/lib/errors/appError';
 export async function GET() {
   try {
     const profile = await businessService.getBusinessProfile();
-    return NextResponse.json({ success: true, data: profile });
+    const response = NextResponse.json({ success: true, data: profile });
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    return response;
   } catch (error: unknown) {
     const appErr = mapErrorToAppError(error, "We couldn't load business information. Please try again.");
     return NextResponse.json({ success: false, error: appErr }, { status: 500 });

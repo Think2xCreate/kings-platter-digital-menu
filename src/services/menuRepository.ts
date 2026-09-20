@@ -37,16 +37,16 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_PROFILE: BusinessProfile = {
-  id: 'kings-platter-tirunelveli',
+  id: 'kings-platter-sivakasi',
   name: "KING'S PLATTER",
   subName: 'RESTAURANT',
   tagline: 'Great Food | Royal Experience',
-  location: 'Tirunelveli',
-  address: 'No. 42, Royal Avenue, South Bypass Road, Tirunelveli, Tamil Nadu 627005',
-  phone: '+91 98765 43210',
+  location: 'Sivakasi',
+  address: 'Housing Board, Srivilliputhur Main Rd, opposite to Abdul Kalam Library, Sivakasi, Tamil Nadu',
+  phone: '+91 89259 54227',
   email: 'info@kingsplatter.com',
-  whatsapp: '+919876543210',
-  mapUrl: 'https://maps.google.com/?q=Tirunelveli+Kings+Platter',
+  whatsapp: '+918925954227',
+  mapUrl: 'https://share.google/xkdrn68kXF2LODuKo',
   openingHours: '11:30 AM - 11:00 PM (All 7 Days)',
   currency: '₹',
   logoUrl: '/kings_platter_logo.jpg',

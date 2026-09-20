@@ -28,8 +28,8 @@ export async function seedInitialDataIfEmpty() {
         instagram: '',
         facebook: '',
         website: '',
-        whatsappNumber: '+91 98765 43210',
-        whatsapp: 'https://wa.me/919876543210',
+        whatsappNumber: '+91 89259 54227',
+        whatsapp: 'https://wa.me/918925954227',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
