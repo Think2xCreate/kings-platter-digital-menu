@@ -1,7 +1,6 @@
 import { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
 import { serverDb, hasAdminCredentials } from '../lib/firebase/server';
 import { FoodItem } from '../types/menu';
-import { seedInitialDataIfEmpty } from './seedService';
 
 export const foodItemService = {
   async getAllFoodItems(): Promise<FoodItem[]> {
@@ -9,7 +8,6 @@ export const foodItemService = {
       throw new Error('Firebase Admin credentials not configured on server.');
     }
 
-    await seedInitialDataIfEmpty();
     const snapshot = await serverDb.collection('foodItems').get();
     const items: FoodItem[] = [];
     snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
@@ -23,7 +21,6 @@ export const foodItemService = {
       throw new Error('Firebase Admin credentials not configured on server.');
     }
 
-    await seedInitialDataIfEmpty();
     const doc = await serverDb.collection('foodItems').doc(id).get();
     if (!doc.exists) return null;
     return { id: doc.id, ...doc.data() } as FoodItem;

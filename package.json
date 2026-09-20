@@ -1,12 +1,12 @@
 {
-  "name": "react-example",
+  "name": "kings-platter-digital-menu",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node start-server.js",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
@@ -37,9 +37,12 @@
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
+    "eslint": "^9.16.0",
+    "eslint-config-next": "^15.1.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
   }
 }
+

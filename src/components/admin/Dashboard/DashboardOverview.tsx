@@ -2,12 +2,9 @@ import React from 'react';
 import { 
   LayoutGrid, 
   UtensilsCrossed, 
-  BadgePercent, 
-  CheckCircle2, 
-  Plus, 
+  BadgePercent,  
   Edit3,
   Calendar,
-  Sparkles
 } from 'lucide-react';
 import { Category, FoodItem, BusinessProfile } from '../../../types/menu';
 import { CrownIcon } from '../../common/MenuIcons';
@@ -91,7 +88,7 @@ export function DashboardOverview({
           <div>
             <span className="text-xs text-gray-500 font-medium block">Active Offers</span>
             <span className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
-              {activeOffersCount || 8}
+              {activeOffersCount}
             </span>
           </div>
         </div>
@@ -200,62 +197,6 @@ export function DashboardOverview({
         />
 
       </div>
-
-      {/* Bottom Royal Food Banner (Matches Screen 2 in Reference) */}
-      <div className="relative rounded-3xl bg-gradient-to-r from-[#111115] via-[#16161C] to-[#101014] text-white p-6 sm:p-8 overflow-hidden border border-[#262630] shadow-xl">
-        {/* Glow backdrop */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#F5B800]/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left max-w-lg">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#F5B800]/15 text-[#F5B800] text-xs font-semibold border border-[#F5B800]/30 mb-1">
-              <Sparkles className="w-3 h-3" />
-              <span>Royal Dining Management</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold font-royal tracking-tight text-white">
-              Great Food<br className="hidden sm:inline" /> Happy Customers
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-              A well-managed menu creates a better dining experience. Update prices, seasonal specials, and availability in real time.
-            </p>
-          </div>
-
-          {/* Right food banner photo with King's Platter seal */}
-          <div className="flex items-center gap-4 shrink-0">
-            <div className="relative rounded-2xl overflow-hidden border-2 border-[#F5B800]/30 shadow-2xl w-48 sm:w-60 h-28 sm:h-32">
-              <SafeImage
-                src="/default-fallback_image.webp"
-                alt="King's Platter Signature BBQ Platter"
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white tracking-wide uppercase">
-                  Signature Platter
-                </span>
-                <span className="text-[9px] text-[#F5B800] font-semibold bg-black/60 px-1.5 py-0.5 rounded">
-                  Live
-                </span>
-              </div>
-            </div>
-
-            {/* Platter Gold Emblem */}
-            <div className="hidden sm:flex flex-col items-center justify-center p-3 rounded-2xl bg-[#181820] border border-[#2B2B38] text-center w-28">
-              <div className="w-8 h-8 rounded-lg bg-[#F5B800] text-black flex items-center justify-center mb-1 shadow-md shadow-[#F5B800]/20">
-                <CrownIcon className="w-5 h-5 text-black" />
-              </div>
-              <span className="font-royal text-[10px] font-bold text-white tracking-wider">
-                KING'S
-              </span>
-              <span className="text-[8px] text-[#F5B800] font-bold tracking-widest">
-                PLATTER
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }

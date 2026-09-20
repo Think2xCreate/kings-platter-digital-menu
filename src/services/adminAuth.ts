@@ -1,4 +1,4 @@
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, User } from 'firebase/auth';
 import { auth } from '../lib/firebase/client';
 
 export interface AdminUser {
@@ -13,7 +13,20 @@ export interface AdminUser {
 const AUTH_STORAGE_KEY = 'kp_admin_auth_user';
 const TOKEN_STORAGE_KEY = 'kp_admin_auth_token';
 
+let sessionExpiredCallback: (() => void) | null = null;
+
 export const adminAuth = {
+  onSessionExpired(callback: () => void) {
+    sessionExpiredCallback = callback;
+  },
+
+  notifySessionExpired() {
+    this.logout();
+    if (sessionExpiredCallback) {
+      sessionExpiredCallback();
+    }
+  },
+
   getStoredUser(): AdminUser | null {
     if (typeof window === 'undefined') return null;
     try {
@@ -41,7 +54,7 @@ export const adminAuth = {
   },
 
   isAuthenticated(): boolean {
-    return !!this.getStoredUser();
+    return !!this.getStoredUser() && !!auth.currentUser;
   },
 
   async login(identifier: string, password: string, rememberMe = true): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
@@ -85,6 +98,7 @@ export const adminAuth = {
       const resData = await response.json();
 
       if (!response.ok || !resData.success) {
+        await signOut(auth);
         return {
           success: false,
           error: resData.error?.message || 'Admin authentication failed.',
@@ -95,7 +109,7 @@ export const adminAuth = {
         id: resData.data.user.uid,
         uid: resData.data.user.uid,
         name: resData.data.user.name || 'Admin',
-        role: resData.data.user.role || 'Super Admin',
+        role: resData.data.user.role || 'Admin',
         email: resData.data.user.email || email,
       };
 
@@ -116,17 +130,42 @@ export const adminAuth = {
     }
   },
 
-  logout(): void {
+  async logout(): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
       localStorage.removeItem(AUTH_STORAGE_KEY);
       localStorage.removeItem(TOKEN_STORAGE_KEY);
       sessionStorage.removeItem(AUTH_STORAGE_KEY);
       sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+      await signOut(auth).catch(() => {});
       fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     } catch {
       // ignore
     }
+  },
+
+  initAuthListener(onAuthUpdate?: (user: User | null) => void) {
+    if (typeof window === 'undefined') return () => {};
+
+    const unsubIdToken = onIdTokenChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const newToken = await firebaseUser.getIdToken();
+          const storage = localStorage.getItem(TOKEN_STORAGE_KEY) ? localStorage : sessionStorage;
+          storage.setItem(TOKEN_STORAGE_KEY, newToken);
+        } catch {
+          this.notifySessionExpired();
+        }
+      } else {
+        if (this.getStoredUser()) {
+          this.notifySessionExpired();
+        }
+      }
+      if (onAuthUpdate) onAuthUpdate(firebaseUser);
+    });
+
+    return unsubIdToken;
   }
 };
+
 

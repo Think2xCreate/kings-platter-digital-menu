@@ -1,4 +1,4 @@
-import { Crown, Sparkles, Utensils } from 'lucide-react';
+import { Crown, Star, Utensils } from 'lucide-react';
 import { SafeImage } from '../common/SafeImage';
 
 interface HeroFoodBannerProps {
@@ -7,15 +7,15 @@ interface HeroFoodBannerProps {
 
 export function HeroFoodBanner({ onExploreClick }: HeroFoodBannerProps) {
   return (
-    <section 
-      aria-label="Featured culinary showcase" 
+    <section
+      aria-label="Featured culinary showcase"
       className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121215] border border-[#26262E] shadow-2xl mb-6 sm:mb-8"
     >
       {/* Background with delicious hero food imagery from King's Platter style */}
       <div className="absolute inset-0 z-0">
         <SafeImage
-          src="/default-fallback_image.webp"
-          alt="King's Platter signature seafood and royal grilled dishes"
+          src="/kongu-mutton-biriyani.jpg"
+          alt="King's Platter signature Kongu Mutton Biriyani"
           className="w-full h-full object-cover object-center scale-105 filter brightness-75 contrast-110"
           loading="eager"
         />
@@ -50,7 +50,7 @@ export function HeroFoodBanner({ onExploreClick }: HeroFoodBannerProps) {
         {/* Action / Badges */}
         <div className="flex flex-wrap items-center gap-2.5 text-xs text-[#9E9EAC]">
           <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-[11px]">
-            <Sparkles className="w-3 h-3 text-[#E5A93C]" />
+            <Star className="w-3 h-3 text-[#E5A93C]" />
             <span className="font-medium text-[#E4E4EC]">Fresh Daily</span>
           </div>
 

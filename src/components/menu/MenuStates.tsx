@@ -78,6 +78,21 @@ export function EmptySearchState({ query, onReset }: EmptySearchProps) {
   );
 }
 
+// 3b. EMPTY MENU STATE (When database contains no food items)
+export function EmptyMenuState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-3xl bg-[#141418] border border-[#22222A] my-8 max-w-2xl mx-auto">
+      <div className="w-16 h-16 rounded-full bg-[#1F1F26] border border-[#2C2C36] flex items-center justify-center text-[#E5A93C] mb-4">
+        <Utensils className="w-8 h-8 stroke-[1.5]" />
+      </div>
+      <h3 className="text-xl font-bold text-white mb-2">No menu items available</h3>
+      <p className="text-sm text-[#9494A0] max-w-md leading-relaxed">
+        Our digital menu is currently being updated. Please check back shortly to view our offerings.
+      </p>
+    </div>
+  );
+}
+
 // 4. ERROR STATE
 interface ErrorStateProps {
   title?: string;

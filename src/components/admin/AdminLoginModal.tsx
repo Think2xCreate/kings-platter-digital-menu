@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { Lock, Mail, Eye, EyeOff, ArrowLeft, Shield } from 'lucide-react';
-import { CrownIcon } from '../common/MenuIcons';
 import { adminAuth, AdminUser } from '../../services/adminAuth';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
+  isExpired?: boolean;
   onSuccess: (user: AdminUser) => void;
   onCancel: () => void;
 }
 
-export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModalProps) {
-  const [email, setEmail] = useState('admin@kingsplatter.com');
-  const [password, setPassword] = useState('admin123');
+export function AdminLoginModal({ isOpen, isExpired, onSuccess, onCancel }: AdminLoginModalProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +20,15 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) {
+      setError('Please enter your admin email.');
+      return;
+    }
+    if (!password || password.trim().length < 4) {
+      setError('Please enter your admin password.');
+      return;
+    }
+
     setError(null);
     setIsLoading(true);
 
@@ -28,20 +37,14 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
       if (result.success && result.user) {
         onSuccess(result.user);
       } else {
-        setError(result.error || 'Invalid credentials');
+        setError(result.error || 'Invalid email or password.');
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Invalid credentials';
+      const msg = err instanceof Error ? err.message : 'Authentication failed';
       setError(msg);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickDemoFill = () => {
-    setEmail('admin@kingsplatter.com');
-    setPassword('admin123');
-    setError(null);
   };
 
   return (
@@ -51,7 +54,7 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
       <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[#F5B800]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[#F5B800]/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Main Login Card (Matches Screen 1 in Reference) */}
+      {/* Main Login Card */}
       <div className="relative w-full max-w-md bg-[#16161D] rounded-3xl border border-[#262632] p-6 sm:p-8 shadow-2xl shadow-black/80 z-10">
         
         {/* Brand Header */}
@@ -78,6 +81,12 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
           </p>
         </div>
 
+        {isExpired && !error && (
+          <div className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-center">
+            Your session has expired. Please sign in again.
+          </div>
+        )}
+
         {error && (
           <div className="p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium text-center">
             {error}
@@ -87,7 +96,7 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          {/* Email / Username */}
+          {/* Email */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
               Admin Email
@@ -107,18 +116,9 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
 
           {/* Password */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Password
-              </label>
-              <button
-                type="button"
-                onClick={handleQuickDemoFill}
-                className="text-[11px] text-[#F5B800] hover:underline cursor-pointer"
-              >
-                Auto-fill demo
-              </button>
-            </div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+              Password
+            </label>
 
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -151,13 +151,6 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
             <span>{isLoading ? 'Authenticating...' : 'Sign In to Dashboard'}</span>
           </button>
 
-          {/* Demo note */}
-          <div className="p-3 bg-[#111116] rounded-xl border border-[#21212B] text-center">
-            <span className="text-[11px] text-gray-400">
-              Demo access: <strong className="text-gray-300">admin@kingsplatter.com</strong> / <strong className="text-[#F5B800]">admin123</strong>
-            </span>
-          </div>
-
         </form>
 
         {/* Back to customer menu */}
@@ -177,3 +170,5 @@ export function AdminLoginModal({ isOpen, onSuccess, onCancel }: AdminLoginModal
     </div>
   );
 }
+
+

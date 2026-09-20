@@ -9,7 +9,7 @@ export interface DeleteResult {
 export interface IMenuRepository {
   getBusinessProfile(): Promise<BusinessProfile>;
   updateBusinessProfile(data: Partial<BusinessProfile>): Promise<BusinessProfile>;
-  
+
   getCategories(includeInactive?: boolean): Promise<Category[]>;
   getCategory(id: string): Promise<Category | null>;
   createCategory(data: Omit<Category, 'id' | 'itemCount'>): Promise<Category>;
@@ -37,16 +37,16 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_PROFILE: BusinessProfile = {
-  id: 'kings-platter-tirunelveli',
+  id: 'kings-platter-sivakasi',
   name: "KING'S PLATTER",
-  subName: 'RESTAURANT & CAFE',
+  subName: 'RESTAURANT',
   tagline: 'Great Food | Royal Experience',
-  location: 'Tirunelveli',
-  address: 'No. 42, Royal Avenue, South Bypass Road, Tirunelveli, Tamil Nadu 627005',
-  phone: '+91 98765 43210',
+  location: 'Sivakasi',
+  address: 'Housing Board, Srivilliputhur Main Rd, opposite to Abdul Kalam Library, Sivakasi, Tamil Nadu',
+  phone: '+91 89259 54227',
   email: 'info@kingsplatter.com',
-  whatsapp: '+919876543210',
-  mapUrl: 'https://maps.google.com/?q=Tirunelveli+Kings+Platter',
+  whatsapp: '+918925954227',
+  mapUrl: 'https://share.google/xkdrn68kXF2LODuKo',
   openingHours: '11:30 AM - 11:00 PM (All 7 Days)',
   currency: '₹',
   logoUrl: '/kings_platter_logo.jpg',
@@ -80,7 +80,6 @@ export class PersistentMenuRepository implements IMenuRepository {
       this.foodItems = [];
     }
   }
-
 
   private saveCacheOnly() {
     if (typeof window === 'undefined') return;
@@ -119,6 +118,13 @@ export class PersistentMenuRepository implements IMenuRepository {
     return headers;
   }
 
+  private checkAuthError(status: number, resData: { error?: { code?: string; message?: string } }) {
+    if (status === 401 || resData.error?.code === 'SESSION_EXPIRED') {
+      adminAuth.notifySessionExpired();
+      throw new Error('Your session has expired. Please sign in again.');
+    }
+  }
+
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
     return () => {
@@ -137,29 +143,25 @@ export class PersistentMenuRepository implements IMenuRepository {
         return { ...this.businessProfile };
       }
     } catch {
-      // ignore network errors and fallback to cached
+      // fallback to cached
     }
     return { ...this.businessProfile };
   }
 
   async updateBusinessProfile(data: Partial<BusinessProfile>): Promise<BusinessProfile> {
-    try {
-      const res = await fetch('/api/business', {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      });
-      const resData = await res.json();
-      if (res.ok && resData.success && resData.data) {
-        this.businessProfile = resData.data;
-        this.persist();
-        return { ...this.businessProfile };
-      }
-    } catch {
-      // ignore
+    const res = await fetch('/api/business', {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const resData = await res.json();
+    this.checkAuthError(res.status, resData);
+
+    if (!res.ok || !resData.success) {
+      throw new Error(resData.error?.message || "We couldn't save your changes. Please try again.");
     }
 
-    this.businessProfile = { ...this.businessProfile, ...data };
+    this.businessProfile = resData.data;
     this.persist();
     return { ...this.businessProfile };
   }
@@ -174,11 +176,11 @@ export class PersistentMenuRepository implements IMenuRepository {
         this.saveCacheOnly();
       }
     } catch {
-      // ignore network failure
+      // fallback to cached
     }
 
-    const list = includeInactive 
-      ? [...this.categories] 
+    const list = includeInactive
+      ? [...this.categories]
       : this.categories.filter(c => c.isActive);
 
     const sorted = list.sort((a, b) => a.displayOrder - b.displayOrder);
@@ -200,35 +202,21 @@ export class PersistentMenuRepository implements IMenuRepository {
   }
 
   async createCategory(data: Omit<Category, 'id' | 'itemCount'>): Promise<Category> {
-    try {
-      const res = await fetch('/api/categories', {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      });
-      const resData = await res.json();
-      if (res.ok && resData.success && resData.data) {
-        this.categories.push(resData.data);
-        this.persist();
-        return resData.data;
-      }
-    } catch {
-      // fallback
+    const res = await fetch('/api/categories', {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const resData = await res.json();
+    this.checkAuthError(res.status, resData);
+
+    if (!res.ok || !resData.success) {
+      throw new Error(resData.error?.message || "We couldn't save the category. Please try again.");
     }
 
-    const newId = `cat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const newCategory: Category = {
-      ...data,
-      id: newId,
-      slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-      iconName: data.iconName || 'Soup',
-      displayOrder: data.displayOrder ?? (this.categories.length + 1),
-      isActive: data.isActive !== undefined ? data.isActive : true,
-    };
-
-    this.categories.push(newCategory);
+    this.categories.push(resData.data);
     this.persist();
-    return { ...newCategory, itemCount: 0 };
+    return resData.data;
   }
 
   async addCategory(data: Omit<Category, 'id' | 'itemCount'>): Promise<Category> {
@@ -236,47 +224,24 @@ export class PersistentMenuRepository implements IMenuRepository {
   }
 
   async updateCategory(id: string, data: Partial<Category>): Promise<Category> {
-    try {
-      const res = await fetch(`/api/categories/${id}`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      });
-      const resData = await res.json();
-      if (res.ok && resData.success && resData.data) {
-        const index = this.categories.findIndex(c => c.id === id);
-        if (index !== -1) {
-          this.categories[index] = resData.data;
-        }
-        this.persist();
-        return resData.data;
-      }
-    } catch {
-      // fallback
+    const res = await fetch(`/api/categories/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const resData = await res.json();
+    this.checkAuthError(res.status, resData);
+
+    if (!res.ok || !resData.success) {
+      throw new Error(resData.error?.message || "We couldn't save the category. Please try again.");
     }
 
     const index = this.categories.findIndex(c => c.id === id);
-    if (index === -1) {
-      throw new Error(`Category with ID ${id} not found`);
+    if (index !== -1) {
+      this.categories[index] = resData.data;
     }
-
-    const updated: Category = {
-      ...this.categories[index],
-      ...data,
-    };
-
-    if (data.name && data.name !== this.categories[index].name) {
-      this.foodItems = this.foodItems.map(item => 
-        item.categoryId === id ? { ...item, categoryName: data.name! } : item
-      );
-    }
-
-    this.categories[index] = updated;
     this.persist();
-    return {
-      ...updated,
-      itemCount: this.foodItems.filter(item => item.categoryId === id).length
-    };
+    return resData.data;
   }
 
   async deleteCategory(id: string): Promise<DeleteResult> {
@@ -288,20 +253,18 @@ export class PersistentMenuRepository implements IMenuRepository {
       };
     }
 
-    try {
-      const res = await fetch(`/api/categories/${id}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-      const resData = await res.json();
-      if (!res.ok || !resData.success) {
-        return {
-          success: false,
-          error: resData.error?.message || 'Failed to delete category.',
-        };
-      }
-    } catch {
-      // fallback
+    const res = await fetch(`/api/categories/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    const resData = await res.json();
+    this.checkAuthError(res.status, resData);
+
+    if (!res.ok || !resData.success) {
+      return {
+        success: false,
+        error: resData.error?.message || "We couldn't delete this category. Please try again.",
+      };
     }
 
     this.categories = this.categories.filter(c => c.id !== id);
@@ -371,37 +334,21 @@ export class PersistentMenuRepository implements IMenuRepository {
   }
 
   async createFoodItem(data: Omit<FoodItem, 'id' | 'finalPrice'>): Promise<FoodItem> {
-    try {
-      const res = await fetch('/api/food-items', {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      });
-      const resData = await res.json();
-      if (res.ok && resData.success && resData.data) {
-        this.foodItems.push(resData.data);
-        this.persist();
-        return resData.data;
-      }
-    } catch {
-      // fallback
+    const res = await fetch('/api/food-items', {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const resData = await res.json();
+    this.checkAuthError(res.status, resData);
+
+    if (!res.ok || !resData.success) {
+      throw new Error(resData.error?.message || "We couldn't save the food item. Please try again.");
     }
 
-    const newId = `food-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const discount = data.discountPercentage || 0;
-    const finalPrice = discount > 0 ? Math.round(data.price * (1 - discount / 100)) : data.price;
-
-    const newItem: FoodItem = {
-      ...data,
-      id: newId,
-      finalPrice,
-      displayOrder: data.displayOrder ?? (this.foodItems.length + 1),
-      isAvailable: data.isAvailable !== undefined ? data.isAvailable : true,
-    };
-
-    this.foodItems.push(newItem);
+    this.foodItems.push(resData.data);
     this.persist();
-    return { ...newItem };
+    return resData.data;
   }
 
   async addFoodItem(data: Omit<FoodItem, 'id' | 'finalPrice'>): Promise<FoodItem> {
@@ -409,69 +356,39 @@ export class PersistentMenuRepository implements IMenuRepository {
   }
 
   async updateFoodItem(id: string, data: Partial<FoodItem>): Promise<FoodItem> {
-    try {
-      const res = await fetch(`/api/food-items/${id}`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      });
-      const resData = await res.json();
-      if (res.ok && resData.success && resData.data) {
-        const index = this.foodItems.findIndex(f => f.id === id);
-        if (index !== -1) {
-          this.foodItems[index] = resData.data;
-        }
-        this.persist();
-        return resData.data;
-      }
-    } catch {
-      // fallback
+    const res = await fetch(`/api/food-items/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    const resData = await res.json();
+    this.checkAuthError(res.status, resData);
+
+    if (!res.ok || !resData.success) {
+      throw new Error(resData.error?.message || "We couldn't save the food item. Please try again.");
     }
 
     const index = this.foodItems.findIndex(f => f.id === id);
-    if (index === -1) {
-      throw new Error(`Food item with ID ${id} not found`);
+    if (index !== -1) {
+      this.foodItems[index] = resData.data;
     }
-
-    const current = this.foodItems[index];
-    const price = data.price !== undefined ? data.price : current.price;
-    const discount = data.discountPercentage !== undefined ? data.discountPercentage : (current.discountPercentage || 0);
-    const finalPrice = discount > 0 ? Math.round(price * (1 - discount / 100)) : price;
-
-    const updated: FoodItem = {
-      ...current,
-      ...data,
-      price,
-      discountPercentage: discount,
-      finalPrice,
-    };
-
-    this.foodItems[index] = updated;
     this.persist();
-    return { ...updated };
+    return resData.data;
   }
 
   async deleteFoodItem(id: string): Promise<DeleteResult> {
-    try {
-      const res = await fetch(`/api/food-items/${id}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-      const resData = await res.json();
-      if (!res.ok || !resData.success) {
-        return { success: false, error: resData.error?.message || 'Failed to delete food item.' };
-      }
-    } catch {
-      // fallback
+    const res = await fetch(`/api/food-items/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    const resData = await res.json();
+    this.checkAuthError(res.status, resData);
+
+    if (!res.ok || !resData.success) {
+      return { success: false, error: resData.error?.message || "We couldn't delete this food item. Please try again." };
     }
 
-    const initialLength = this.foodItems.length;
     this.foodItems = this.foodItems.filter(f => f.id !== id);
-
-    if (this.foodItems.length === initialLength) {
-      return { success: false, error: 'Food item not found.' };
-    }
-
     this.persist();
     return { success: true };
   }

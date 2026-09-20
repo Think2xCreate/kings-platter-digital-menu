@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 interface BrandIdentityProps {
@@ -22,7 +24,7 @@ interface BrandIdentityProps {
 export function BrandIdentity({
   logoUrl = '/kings_platter_logo.jpg',
   name = "King's Platter",
-  subName = 'Restaurant & Cafe',
+  subName = 'RESTAURANT',
   className = '',
   size = 'md',
   variant = 'customer',
@@ -71,9 +73,8 @@ export function BrandIdentity({
           <img
             src={logoUrl}
             alt={name}
-            className={`${sizeDimensions.logo} object-contain rounded-xl drop-shadow-md transition-transform duration-200 ${
-              onClick ? 'hover:scale-[1.02] active:scale-[0.98]' : ''
-            }`}
+            className={`${sizeDimensions.logo} object-contain rounded-xl drop-shadow-md transition-transform duration-200 ${onClick ? 'hover:scale-[1.02] active:scale-[0.98]' : ''
+              }`}
             loading="eager"
           />
         </div>

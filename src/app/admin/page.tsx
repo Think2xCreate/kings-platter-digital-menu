@@ -1,42 +1,39 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
-import { adminAuth } from '@/services/adminAuth';
-import { BrandLoader } from '@/components/common/BrandLoader';
+import React, { useContext } from 'react';
+import { AdminContext } from './layout';
+import { DashboardOverview } from '@/components/admin/Dashboard/DashboardOverview';
+import { DashboardSkeleton } from '@/components/admin/AdminSkeletons';
 
-export default function AdminPage() {
-  const router = useRouter();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export default function AdminDashboardPage() {
+  const {
+    business,
+    categories,
+    foodItems,
+    isLoadingData,
+    handleNavigateTab,
+    setIsAddCategoryOpen,
+    setIsAddFoodItemOpen,
+  } = useContext(AdminContext);
 
-  useEffect(() => {
-    if (!adminAuth.isAuthenticated()) {
-      router.replace('/admin/login');
-    } else {
-      setIsAuthenticated(true);
-      setIsCheckingAuth(false);
-    }
-  }, [router]);
-
-  if (isCheckingAuth || !isAuthenticated) {
-    return (
-      <BrandLoader
-        isLoading={true}
-        variant="admin"
-        restaurantName="KING'S PLATTER"
-        subName="ADMIN PORTAL"
-      />
-    );
+  if (isLoadingData || !business) {
+    return <DashboardSkeleton />;
   }
 
   return (
-    <AdminDashboard
-      onBackToCustomerMenu={() => {
-        router.push('/');
+    <DashboardOverview
+      categories={categories}
+      foodItems={foodItems}
+      business={business}
+      onNavigateTab={handleNavigateTab}
+      onOpenAddCategory={() => {
+        handleNavigateTab('categories');
+        setIsAddCategoryOpen(true);
+      }}
+      onOpenAddFoodItem={() => {
+        handleNavigateTab('food-items');
+        setIsAddFoodItemOpen(true);
       }}
     />
   );
 }
-

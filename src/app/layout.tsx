@@ -1,17 +1,68 @@
 import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import '../index.css';
 
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-sans',
+});
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL) : undefined;
+
 export const metadata: Metadata = {
-  title: "KING'S PLATTER — QR Digital Restaurant Menu",
-  description: "Experience royal dining at King's Platter Restaurant & Cafe. Browse our premium digital menu, appetizers, chef specials, seafood, and desserts.",
+  metadataBase: baseUrl,
+  title: {
+    default: "King's Platter | Restaurant in Sivakasi, Tamil Nadu",
+    template: "%s | King's Platter",
+  },
+  description: "Explore King's Platter in Sivakasi, Tamil Nadu. Browse the menu featuring biryani, mandi, Indian favourites, Chinese & Continental dishes, noodles, pasta, seafood and more.",
+  keywords: ["King's Platter", "Restaurant in Sivakasi", "Biryani in Sivakasi", "Mandi in Sivakasi", "Sivakasi Restaurant", "Digital Menu", "QR Menu", "Virudhunagar Restaurant", "Tamil Nadu Dining"],
+  authors: [{ name: "King's Platter" }],
+  creator: "King's Platter",
+  publisher: "King's Platter",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon1.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/manifest.json',
   openGraph: {
     title: "KING'S PLATTER — QR Digital Restaurant Menu",
-    description: "Great Food | Royal Experience at King's Platter Restaurant & Cafe.",
+    description: "Great Food | Royal Experience at King's Platter RESTAURANT. Browse our digital menu instantly.",
     type: 'website',
+    locale: 'en_US',
+    siteName: "King's Platter",
+    images: [
+      {
+        url: '/kings_platter_logo.jpg',
+        width: 800,
+        height: 800,
+        alt: "King's Platter Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "KING'S PLATTER — QR Digital Restaurant Menu",
+    description: "Great Food | Royal Experience at King's Platter RESTAURANT.",
+    images: ['/kings_platter_logo.jpg'],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
@@ -21,16 +72,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={plusJakartaSans.variable}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
+        <meta name="apple-mobile-web-app-title" content="Kings Platter" />
+        <meta name="theme-color" content="#0D0D10" />
       </head>
-      <body className="bg-[#0D0D10] text-[#E8E8ED] antialiased">
+      <body className="bg-[#0D0D10] text-[#E8E8ED] antialiased font-sans">
         {children}
       </body>
     </html>

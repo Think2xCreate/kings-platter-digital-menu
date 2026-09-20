@@ -1,14 +1,24 @@
 import { adminAuth } from '../services/adminAuth';
 
+export interface UploadResult {
+  url: string;
+  path: string;
+}
+
+export interface ReplaceImageOptions {
+  newFile: File;
+  folder?: 'business' | 'categories' | 'food-items';
+  oldStorageKey?: string | null;
+}
+
 /**
- * Uploads an image file to the Next.js /api/upload endpoint,
- * which validates format (.jpg, .png, .webp), converts to lightweight .webp,
- * and stores it in the Supabase Storage bucket.
+ * Uploads an image file to Next.js /api/upload endpoint.
+ * Validates format, converts to WebP, and uploads to Supabase Storage.
  */
 export async function uploadImageToSupabase(
   file: File,
   folder: 'business' | 'categories' | 'food-items' = 'food-items'
-): Promise<string> {
+): Promise<UploadResult> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('folder', folder);
@@ -30,5 +40,51 @@ export async function uploadImageToSupabase(
     throw new Error(resData.error?.message || 'Failed to upload image.');
   }
 
-  return resData.data.url;
+  return {
+    url: resData.data.url,
+    path: resData.data.path || '',
+  };
 }
+
+/**
+ * Safely deletes an old image object from Supabase Storage by its storage key.
+ */
+export async function deleteImageFromSupabase(storageKey?: string | null): Promise<boolean> {
+  if (!storageKey || typeof storageKey !== 'string' || !storageKey.trim()) {
+    return true;
+  }
+
+  const token = adminAuth.getStoredToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  try {
+    const res = await fetch(`/api/storage/delete?storageKey=${encodeURIComponent(storageKey.trim())}`, {
+      method: 'DELETE',
+      headers,
+    });
+    const resData = await res.json();
+    return res.ok && resData.success;
+  } catch (err) {
+    console.warn('Failed to delete old Supabase image:', err);
+    return false;
+  }
+}
+
+/**
+ * Safely replaces an existing storage image.
+ * Uploads NEW image first, verifies success, and deletes old object after Firestore update succeeds.
+ */
+export async function replaceStorageImage(options: ReplaceImageOptions): Promise<UploadResult> {
+  const { newFile, folder = 'food-items', oldStorageKey } = options;
+
+  // 1. Upload new image to Supabase
+  const uploadRes = await uploadImageToSupabase(newFile, folder);
+
+  // Return new upload info. The caller should update Firestore next,
+  // then call deleteImageFromSupabase(oldStorageKey) upon successful save.
+  return uploadRes;
+}
+

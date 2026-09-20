@@ -24,7 +24,7 @@ King's Platter uses Firebase for Database (Firestore), Authentication, and File 
 ```json
 {
   "name": "KING'S PLATTER",
-  "subName": "RESTAURANT & CAFE",
+  "subName": "RESTAURANT",
   "tagline": "Great Food | Royal Experience",
   "location": "Tirunelveli",
   "address": "No. 42, Royal Avenue, South Bypass Road...",

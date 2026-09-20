@@ -3,18 +3,25 @@ import { verifyAdminAuth } from '@/lib/security/auth';
 import { checkRateLimit } from '@/lib/rate-limit/rate-limiter';
 import { getServerSupabaseClient, hasSupabaseCredentials } from '@/lib/supabase/server';
 import { processAndConvertToWebP } from '@/lib/media/compressor';
+import { mapErrorToAppError } from '@/lib/errors/appError';
 
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     const rateCheck = checkRateLimit(`upload:${ip}`, 10, 60 * 1000);
     if (!rateCheck.success) {
-      return NextResponse.json({ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Upload rate limit exceeded. Please wait a minute.' } }, { status: 429 });
+      return NextResponse.json({
+        success: false,
+        error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Upload rate limit exceeded. Please wait a minute.' },
+      }, { status: 429 });
     }
 
     const authResult = await verifyAdminAuth(request);
     if (!authResult.isAuthorized) {
-      return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: authResult.error || 'Admin access required for uploads.' } }, { status: 401 });
+      return NextResponse.json({
+        success: false,
+        error: { code: 'SESSION_EXPIRED', message: authResult.error || 'Your session has expired. Please sign in again.' },
+      }, { status: 401 });
     }
 
     const formData = await request.formData();
@@ -22,7 +29,10 @@ export async function POST(request: NextRequest) {
     const folder = (formData.get('folder') as string) || 'food-items';
 
     if (!file) {
-      return NextResponse.json({ success: false, error: { code: 'NO_FILE', message: 'No file provided.' } }, { status: 400 });
+      return NextResponse.json({
+        success: false,
+        error: { code: 'NO_FILE', message: 'Please select an image file.' },
+      }, { status: 400 });
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -36,9 +46,11 @@ export async function POST(request: NextRequest) {
         originalName: file.name,
         folder,
       });
-    } catch (validationError: unknown) {
-      const msg = validationError instanceof Error ? validationError.message : 'Invalid image upload.';
-      return NextResponse.json({ success: false, error: { code: 'INVALID_IMAGE', message: msg } }, { status: 400 });
+    } catch {
+      return NextResponse.json({
+        success: false,
+        error: { code: 'INVALID_IMAGE', message: 'Please select a valid image file (JPG, PNG, WEBP).' },
+      }, { status: 400 });
     }
 
     const BUCKET_NAME = 'kings-platter-media';
@@ -46,7 +58,7 @@ export async function POST(request: NextRequest) {
     if (!hasSupabaseCredentials()) {
       return NextResponse.json({
         success: false,
-        error: { code: 'CONFIG_ERROR', message: 'Supabase Storage credentials not configured on server.' },
+        error: { code: 'CONFIG_ERROR', message: 'Image upload is temporarily unavailable.' },
       }, { status: 500 });
     }
 
@@ -54,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (!supabase) {
       return NextResponse.json({
         success: false,
-        error: { code: 'CLIENT_ERROR', message: 'Failed to initialize Supabase Storage client.' },
+        error: { code: 'CLIENT_ERROR', message: 'Image upload failed. Please try again.' },
       }, { status: 500 });
     }
 
@@ -66,9 +78,10 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
+      const appErr = mapErrorToAppError(uploadError, 'Image upload failed. Please try again.');
       return NextResponse.json({
         success: false,
-        error: { code: 'STORAGE_UPLOAD_ERROR', message: `Supabase Storage upload failed: ${uploadError.message}` },
+        error: { code: 'UPLOAD_ERROR', message: appErr.message },
       }, { status: 500 });
     }
 
@@ -86,8 +99,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'File upload failed.';
-    return NextResponse.json({ success: false, error: { code: 'UPLOAD_FAILED', message } }, { status: 500 });
+    const appErr = mapErrorToAppError(error, 'Image upload failed. Please try again.');
+    return NextResponse.json({ success: false, error: appErr }, { status: 500 });
   }
 }
-

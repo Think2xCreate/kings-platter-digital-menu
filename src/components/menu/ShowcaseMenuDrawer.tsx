@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Search, ChevronRight, Sparkles, Utensils } from 'lucide-react';
+import { X, Search, ChevronRight, Star, Utensils } from 'lucide-react';
 import { Category, FoodItem } from '../../types/menu';
 import { getMenuCategoryIcon, CrownIcon } from '../common/MenuIcons';
+import { resolveImageUrl } from '../../utils/imageResolver';
 
 interface ShowcaseMenuDrawerProps {
   isOpen: boolean;
@@ -49,9 +50,9 @@ export function ShowcaseMenuDrawer({
         {/* Header with Royal Identity */}
         <div className="p-4 sm:p-6 pb-3 border-b border-[#22222A] flex items-center justify-between bg-gradient-to-r from-[#17171E] via-[#111115] to-[#17171E]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E5A93C] to-[#B07110] flex items-center justify-center text-black shadow-lg shadow-[#E5A93C]/20 border border-[#F5BE58]/40">
+            {/* <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E5A93C] to-[#B07110] flex items-center justify-center text-black shadow-lg shadow-[#E5A93C]/20 border border-[#F5BE58]/40">
               <CrownIcon className="w-5 h-5" />
-            </div>
+            </div> */}
             <div>
               <h2 id="showcase-menu-title" className="text-lg sm:text-xl font-bold font-royal text-white flex items-center gap-2">
                 RESTAURANT MENU
@@ -109,7 +110,7 @@ export function ShowcaseMenuDrawer({
               }}
               className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1D1D26] text-[#A0A0B0] hover:text-white text-xs font-medium border border-[#2B2B38] transition-all"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#E5A93C]" />
+              <Star className="w-3.5 h-3.5 text-[#E5A93C]" />
               <span>Chef's Seafood</span>
             </button>
             <button
@@ -151,7 +152,7 @@ export function ShowcaseMenuDrawer({
                   }`}>
                     {cat.imageUrl ? (
                       <img
-                        src={cat.imageUrl}
+                        src={resolveImageUrl(cat.imageUrl)}
                         alt={cat.name}
                         className="w-full h-full object-cover"
                         loading="lazy"

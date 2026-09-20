@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SafeImage } from '../common/SafeImage';
+import { resolveImageUrl, DEFAULT_FALLBACK_IMAGE } from '../../utils/imageResolver';
 
 interface FoodImageProps {
   src: string;
@@ -12,7 +13,12 @@ export function FoodImage({ src, alt, className = '', priority = false }: FoodIm
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const finalSrc = !src || src.trim() === '' || hasError ? '/default-fallback_image.webp' : src;
+  const resolvedSrc = resolveImageUrl(src, DEFAULT_FALLBACK_IMAGE);
+  const finalSrc = hasError ? DEFAULT_FALLBACK_IMAGE : resolvedSrc;
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
 
   return (
     <div className={`relative overflow-hidden bg-[#18181C] ${className}`}>
@@ -34,4 +40,5 @@ export function FoodImage({ src, alt, className = '', priority = false }: FoodIm
     </div>
   );
 }
+
 
