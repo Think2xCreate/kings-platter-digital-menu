@@ -24,7 +24,16 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json({
+        success: false,
+        error: { code: 'INVALID_FORM_DATA', message: 'Unable to parse uploaded file. Please select a valid image file.' },
+      }, { status: 400 });
+    }
+
     const file = formData.get('file') as File | null;
     const folder = (formData.get('folder') as string) || 'food-items';
 
@@ -46,10 +55,11 @@ export async function POST(request: NextRequest) {
         originalName: file.name,
         folder,
       });
-    } catch {
+    } catch (procErr: unknown) {
+      const errMsg = procErr instanceof Error ? procErr.message : 'Please select a valid image file (JPG, PNG, WEBP).';
       return NextResponse.json({
         success: false,
-        error: { code: 'INVALID_IMAGE', message: 'Please select a valid image file (JPG, PNG, WEBP).' },
+        error: { code: 'INVALID_IMAGE', message: errMsg },
       }, { status: 400 });
     }
 
