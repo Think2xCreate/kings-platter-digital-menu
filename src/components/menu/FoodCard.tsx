@@ -122,7 +122,7 @@ export function FoodCard({
       </div>
 
       {/* 5. Footer: Price / Offer & 6. Select Action */}
-      <div className="p-2.5 sm:p-4 pt-1 sm:pt-0 border-t border-[#22222A] mt-auto flex items-center justify-between gap-2">
+      <div className="p-2 sm:p-4 border-t border-[#22222A] mt-auto flex items-center justify-between gap-2">
         <div className="flex flex-col min-w-0">
           {offerValid && pricingInfo.originalPrice > pricingInfo.finalPrice && (
             <span className="text-[10px] sm:text-xs text-[#7A7A85] line-through font-medium truncate">

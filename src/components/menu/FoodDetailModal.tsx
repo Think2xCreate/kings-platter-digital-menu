@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Clock, Flame, Check, Plus } from 'lucide-react';
+import { Clock, Flame, Check, Plus } from 'lucide-react';
 import { FoodItem, FoodVariant } from '../../types/menu';
-import { FoodImage } from './FoodImage';
-import { DietaryIndicator } from './DietaryIndicator';
+import { FoodDetailMedia } from './FoodDetailMedia';
 import { formatPrice, calculateSavings, isOfferValid, calculateFoodPricing } from '../../utils/pricing';
 
 interface FoodDetailModalProps {
@@ -77,45 +76,19 @@ export function FoodDetailModal({ item, onClose, isSelected = false, onToggleSel
         ref={modalRef}
         className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[#151518] border border-[#2B2B33] shadow-2xl flex flex-col text-[#EDEDF2] no-scrollbar animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-200"
       >
-        {/* Close Button */}
-        <button
-          ref={closeButtonRef}
-          type="button"
-          onClick={onClose}
-          aria-label="Close dish details"
-          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-white/90 hover:text-white flex items-center justify-center border border-white/10 transition-colors shadow-lg"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Compact Food Image Container (Req #5 - Height Reduction for UX) */}
-        <div className="relative aspect-[21/9] sm:aspect-[16/8] max-h-52 w-full shrink-0 bg-[#1D1D24] overflow-hidden">
-          <FoodImage
-            src={item.imageUrl}
-            alt={item.name}
-            className="w-full h-full object-cover object-center"
-            priority={true}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#151518] via-transparent to-black/40 pointer-events-none" />
-
-          {/* Badges on image */}
-          <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between pointer-events-none">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 flex items-center gap-2">
-                <DietaryIndicator type={item.dietary} showLabel={true} size="md" />
-              </div>
-              <span className="bg-[#24242C]/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-semibold text-[#D4D4DE] border border-white/10">
-                {item.categoryName}
-              </span>
-            </div>
-
-            {offerValid && (
-              <span className="bg-[#E5A93C] text-black px-3 py-0.5 rounded-full text-xs font-extrabold shadow-lg">
-                {pricingInfo.offerLabel}
-              </span>
-            )}
-          </div>
-        </div>
+        {/* Concept 01 — Cinematic Food Hero Media Container */}
+        <FoodDetailMedia
+          imageUrl={item.imageUrl}
+          videoUrl={item.videoUrl}
+          youtubeVideoId={item.youtubeVideoId}
+          youtubeVideoUrl={item.youtubeVideoUrl}
+          foodName={item.name}
+          categoryName={item.categoryName}
+          dietaryType={item.dietary}
+          offerLabel={offerValid ? pricingInfo.offerLabel : null}
+          onClose={onClose}
+          closeButtonRef={closeButtonRef}
+        />
 
         {/* Detail Content */}
         <div className="p-5 sm:p-6 space-y-5">

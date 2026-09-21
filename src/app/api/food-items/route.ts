@@ -3,6 +3,7 @@ import { foodItemService } from '@/services/foodItemService';
 import { verifyAdminAuth } from '@/lib/security/auth';
 import { checkRateLimit } from '@/lib/rate-limit/rate-limiter';
 import { FoodItemSchema } from '@/lib/validation/schemas';
+import { normalizeYouTubeVideoUrl } from '@/utils/imageResolver';
 import { mapErrorToAppError } from '@/lib/errors/appError';
 
 export async function GET() {
@@ -46,7 +47,25 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const createdItem = await foodItemService.createFoodItem(parseResult.data);
+    const payload = parseResult.data;
+    const rawVideoUrl = payload.youtubeVideoUrl || payload.videoUrl;
+
+    if (rawVideoUrl && rawVideoUrl.trim() !== '') {
+      const norm = normalizeYouTubeVideoUrl(rawVideoUrl);
+      if (!norm.isValid) {
+        return NextResponse.json({
+          success: false,
+          error: { code: 'INVALID_YOUTUBE_URL', message: norm.error || 'Please enter a valid YouTube video URL.' },
+        }, { status: 400 });
+      }
+      payload.youtubeVideoId = norm.videoId;
+      payload.youtubeVideoUrl = norm.normalizedUrl;
+    } else {
+      payload.youtubeVideoId = null;
+      payload.youtubeVideoUrl = null;
+    }
+
+    const createdItem = await foodItemService.createFoodItem(payload);
     return NextResponse.json({ success: true, data: createdItem }, { status: 201 });
   } catch (error: unknown) {
     const appErr = mapErrorToAppError(error, "We couldn't save the food item. Please try again.");
