@@ -54,6 +54,10 @@ export interface FoodItem {
   finalPrice: number;
   imageUrl: string;
   imageStorageKey?: string;
+  youtubeVideoId?: string | null;
+  youtubeVideoUrl?: string | null;
+  videoUrl?: string;
+  videoStorageKey?: string;
   isAvailable: boolean;
   dietary: DietaryType;
   isPopular?: boolean;

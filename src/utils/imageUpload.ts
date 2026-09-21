@@ -46,6 +46,7 @@ export async function uploadImageToSupabase(
   };
 }
 
+
 /**
  * Safely deletes an old image object from Supabase Storage by its storage key.
  */

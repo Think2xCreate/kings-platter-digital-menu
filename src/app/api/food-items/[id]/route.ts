@@ -3,6 +3,7 @@ import { foodItemService } from '@/services/foodItemService';
 import { verifyAdminAuth } from '@/lib/security/auth';
 import { checkRateLimit } from '@/lib/rate-limit/rate-limiter';
 import { FoodItemSchema } from '@/lib/validation/schemas';
+import { normalizeYouTubeVideoUrl } from '@/utils/imageResolver';
 import { mapErrorToAppError } from '@/lib/errors/appError';
 
 export async function PUT(
@@ -38,7 +39,26 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const updatedItem = await foodItemService.updateFoodItem(id, parseResult.data);
+    const payload = parseResult.data;
+    if (payload.youtubeVideoUrl !== undefined || payload.videoUrl !== undefined) {
+      const rawVideoUrl = payload.youtubeVideoUrl ?? payload.videoUrl;
+      if (rawVideoUrl && rawVideoUrl.trim() !== '') {
+        const norm = normalizeYouTubeVideoUrl(rawVideoUrl);
+        if (!norm.isValid) {
+          return NextResponse.json({
+            success: false,
+            error: { code: 'INVALID_YOUTUBE_URL', message: norm.error || 'Please enter a valid YouTube video URL.' },
+          }, { status: 400 });
+        }
+        payload.youtubeVideoId = norm.videoId;
+        payload.youtubeVideoUrl = norm.normalizedUrl;
+      } else {
+        payload.youtubeVideoId = null;
+        payload.youtubeVideoUrl = null;
+      }
+    }
+
+    const updatedItem = await foodItemService.updateFoodItem(id, payload);
     return NextResponse.json({ success: true, data: updatedItem });
   } catch (error: unknown) {
     const appErr = mapErrorToAppError(error, "We couldn't save the food item. Please try again.");

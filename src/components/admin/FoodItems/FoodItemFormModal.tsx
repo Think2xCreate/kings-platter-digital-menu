@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Image as ImageIcon, Loader2, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, Video as VideoIcon, Loader2, Plus, Trash2, CheckCircle2, Play } from 'lucide-react';
 import { FoodItem, Category, DietaryType, PricingType, FoodVariant } from '../../../types/menu';
 import { uploadImageToSupabase, deleteImageFromSupabase } from '../../../utils/imageUpload';
-import { resolveImageUrl } from '../../../utils/imageResolver';
+import { resolveImageUrl, extractYouTubeId, normalizeYouTubeVideoUrl, getYouTubeThumbnail } from '../../../utils/imageResolver';
 import { countWords, MAX_FOOD_DESCRIPTION_WORDS } from '../../../utils/wordCount';
 
 interface FoodItemFormModalProps {
@@ -48,13 +48,17 @@ export function FoodItemFormModal({
   const [prepTimeMinutes, setPrepTimeMinutes] = useState<number | ''>('');
   const [spicyLevel, setSpicyLevel] = useState<0 | 1 | 2 | 3 | ''>('');
   
-  // Image Upload State (Real Async Workflow)
+  // Image Upload State
   const [imageUrl, setImageUrl] = useState('');
   const [imageStorageKey, setImageStorageKey] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadErrorMessage, setUploadErrorMessage] = useState<string | null>(null);
+
+  // YouTube Video URL State
+  const [youtubeVideoUrl, setYoutubeVideoUrl] = useState('');
+  const [youtubeUrlError, setYoutubeUrlError] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +92,10 @@ export function FoodItemFormModal({
       setDiscountPercentage(initialData.discountPercentage || val || 0);
       setImageUrl(initialData.imageUrl || '');
       setImageStorageKey(initialData.imageStorageKey || '');
+      
+      const existingYt = initialData.youtubeVideoUrl || (initialData.youtubeVideoId ? `https://www.youtube.com/watch?v=${initialData.youtubeVideoId}` : initialData.videoUrl || '');
+      setYoutubeVideoUrl(existingYt);
+
       setIsAvailable(initialData.isAvailable !== false);
       setDietary(initialData.dietary || '');
       setIsPopular(!!initialData.isPopular);
@@ -111,6 +119,7 @@ export function FoodItemFormModal({
       setDiscountPercentage(0);
       setImageUrl('');
       setImageStorageKey('');
+      setYoutubeVideoUrl('');
       setIsAvailable(true);
       setDietary('');
       setIsPopular(false);
@@ -127,6 +136,7 @@ export function FoodItemFormModal({
     }
     setUploadStatus('idle');
     setUploadErrorMessage(null);
+    setYoutubeUrlError(null);
     setError(null);
   }, [initialData, mode, isOpen]);
 
@@ -241,6 +251,23 @@ export function FoodItemFormModal({
       return;
     }
 
+    // YouTube Video URL Validation
+    let normalizedYtUrl: string | undefined = undefined;
+    let extractedYtId: string | undefined = undefined;
+    setYoutubeUrlError(null);
+
+    if (youtubeVideoUrl.trim()) {
+      const result = normalizeYouTubeVideoUrl(youtubeVideoUrl.trim());
+      if (!result.isValid || !result.videoId || !result.normalizedUrl) {
+        const errMsg = result.error || 'Please enter a valid YouTube video URL (e.g. https://www.youtube.com/watch?v=...).';
+        setYoutubeUrlError(errMsg);
+        setError(errMsg);
+        return;
+      }
+      normalizedYtUrl = result.normalizedUrl;
+      extractedYtId = result.videoId;
+    }
+
     const selectedCategory = categories.find((c) => c.id === categoryId);
     const categoryName = selectedCategory ? selectedCategory.name : 'Mains';
 
@@ -250,9 +277,10 @@ export function FoodItemFormModal({
 
       let finalImageUrl = imageUrl;
       let finalStorageKey = imageStorageKey;
+
       const oldStorageKey = initialData?.imageStorageKey;
 
-      // 1. If a new image file was selected, upload it to Supabase Storage now
+      // 1. Upload new image file if selected
       if (pendingFile) {
         setUploadStatus('uploading');
         try {
@@ -285,6 +313,8 @@ export function FoodItemFormModal({
         offerType: enableOffer ? offerType : undefined,
         imageUrl: finalImageUrl.trim(),
         imageStorageKey: finalStorageKey.trim(),
+        youtubeVideoUrl: normalizedYtUrl,
+        youtubeVideoId: extractedYtId,
         isAvailable,
         dietary,
         isPopular,
@@ -294,7 +324,7 @@ export function FoodItemFormModal({
         spicyLevel: spicyLevel !== '' ? (Number(spicyLevel) as 0 | 1 | 2 | 3) : undefined,
       });
 
-      // 3. After successful Firestore save, safely delete old image if replaced
+      // 3. Delete old image object after successful Firestore update if changed
       if (pendingFile && oldStorageKey && oldStorageKey !== finalStorageKey) {
         deleteImageFromSupabase(oldStorageKey).catch(() => {});
       }
@@ -309,6 +339,8 @@ export function FoodItemFormModal({
   };
 
   const previewDisplayUrl = pendingPreview || resolveImageUrl(imageUrl);
+  const currentYtId = extractYouTubeId(youtubeVideoUrl);
+  const ytThumbnail = currentYtId ? getYouTubeThumbnail(currentYtId, 'hq') : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
@@ -353,51 +385,121 @@ export function FoodItemFormModal({
           {/* Top Section: Compact Image & Core Details side-by-side on desktop */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
             
-            {/* Left Column: Constrained Compact Image Preview & Upload (Req #2 & #7) */}
-            <div className="md:col-span-4 bg-gray-50 p-4 rounded-2xl border border-gray-200 flex flex-col items-center">
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2 w-full text-left">
-                Food Image Preview
-              </label>
+            {/* Left Column: Constrained Compact Image & YouTube Video input */}
+            <div className="md:col-span-4 bg-gray-50 p-4 rounded-2xl border border-gray-200 flex flex-col items-center space-y-4">
+              
+              {/* Food Image */}
+              <div className="w-full">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2 text-left">
+                  Food Photo Preview
+                </label>
 
-              <div className="relative w-full aspect-[4/3] rounded-xl bg-gray-200 border border-gray-300 overflow-hidden shadow-inner flex items-center justify-center group mb-3">
-                {previewDisplayUrl ? (
-                  <img src={previewDisplayUrl} alt="Dish Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-center p-3">
-                    <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-1" />
-                    <span className="text-[11px] text-gray-500 font-medium">No image selected</span>
-                  </div>
-                )}
+                <div className="relative w-full aspect-[4/3] rounded-xl bg-gray-200 border border-gray-300 overflow-hidden shadow-inner flex items-center justify-center group mb-2">
+                  {previewDisplayUrl ? (
+                    <img src={previewDisplayUrl} alt="Dish Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center p-3">
+                      <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                      <span className="text-[11px] text-gray-500 font-medium">No image selected</span>
+                    </div>
+                  )}
 
-                {/* Upload Status Overlay */}
-                {uploadStatus === 'uploading' && (
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white text-xs font-semibold p-2 text-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-amber-400 mb-1" />
-                    <span>Uploading image...</span>
-                  </div>
-                )}
-                {uploadStatus === 'success' && (
-                  <div className="absolute top-2 right-2 bg-emerald-500 text-white p-1 rounded-full shadow-md">
-                    <CheckCircle2 className="w-4 h-4" />
-                  </div>
+                  {/* Upload Status Overlay */}
+                  {uploadStatus === 'uploading' && (
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white text-xs font-semibold p-2 text-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-amber-400 mb-1" />
+                      <span>Uploading image...</span>
+                    </div>
+                  )}
+                  {uploadStatus === 'success' && (
+                    <div className="absolute top-2 right-2 bg-emerald-500 text-white p-1 rounded-full shadow-md">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+
+                <label className="w-full py-2 px-3 rounded-xl bg-white hover:bg-gray-100 border border-gray-300 text-xs font-bold text-gray-800 flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs">
+                  <Upload className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{pendingFile ? 'Change Selected Photo' : 'Select Food Photo'}</span>
+                  <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                </label>
+
+                {uploadErrorMessage && (
+                  <p className="text-[11px] text-red-600 font-semibold mt-1 text-center">
+                    {uploadErrorMessage}
+                  </p>
                 )}
               </div>
 
-              <label className="w-full py-2 px-3 rounded-xl bg-white hover:bg-gray-100 border border-gray-300 text-xs font-bold text-gray-800 flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs">
-                <Upload className="w-3.5 h-3.5 text-amber-600" />
-                <span>{pendingFile ? 'Change Selected Photo' : 'Select Food Photo'}</span>
-                <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-              </label>
+              {/* YouTube Video Section (Concept 01 Cinematic Food Hero) */}
+              <div className="w-full pt-3 border-t border-gray-200">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5 text-left flex items-center justify-between">
+                  <span>Cinematic Hero Video</span>
+                  <span className="text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-semibold border border-amber-200">Concept 01</span>
+                </label>
 
-              <p className="text-[10px] text-gray-400 mt-1.5 text-center">
-                Supported: WEBP, JPG, PNG (Max 5MB)
-              </p>
+                {/* YouTube Video URL Text Field */}
+                <div className="mb-2">
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={youtubeVideoUrl}
+                      onChange={(e) => {
+                        setYoutubeVideoUrl(e.target.value);
+                        setYoutubeUrlError(null);
+                      }}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className={`w-full px-3 py-1.5 rounded-xl border ${
+                        youtubeUrlError ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:border-amber-500'
+                      } text-xs font-medium text-gray-900 outline-none focus:ring-1 pr-14`}
+                    />
+                    {youtubeVideoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setYoutubeVideoUrl('');
+                          setYoutubeUrlError(null);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-rose-600 hover:text-rose-800 bg-rose-50 px-2 py-0.5 rounded-md font-bold"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    Paste YouTube URL. The video will play in Concept 01 customer modal.
+                  </p>
+                  {youtubeUrlError && (
+                    <p className="text-[11px] text-red-600 font-bold mt-1">
+                      {youtubeUrlError}
+                    </p>
+                  )}
+                </div>
 
-              {uploadErrorMessage && (
-                <p className="text-[11px] text-red-600 font-semibold mt-1 text-center">
-                  {uploadErrorMessage}
-                </p>
-              )}
+                {/* Live YouTube Thumbnail & Video Preview */}
+                <div className="relative w-full aspect-[16/10] rounded-xl bg-gray-900 border border-gray-300 overflow-hidden shadow-inner flex items-center justify-center group">
+                  {ytThumbnail ? (
+                    <>
+                      <img src={ytThumbnail} alt="YouTube Hero Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-amber-500/90 text-black flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <Play className="w-5 h-5 fill-current ml-0.5" />
+                        </div>
+                      </div>
+                      <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-xs text-white text-[10px] px-2 py-0.5 rounded-md font-mono">
+                        ID: {currentYtId}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center p-3 text-gray-400">
+                      <VideoIcon className="w-7 h-7 mx-auto mb-1 text-gray-500" />
+                      <span className="text-[11px] text-gray-400 font-medium block">No YouTube video linked</span>
+                      <span className="text-[9px] text-gray-500 block">Paste YouTube URL above</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
 
             {/* Right Column: Name, Category, Description, Dietary */}

@@ -40,6 +40,11 @@ export const FoodItemSchema = z.object({
   offerValue: z.number().nonnegative().optional(),
   offerEnabled: z.boolean().optional(),
   imageUrl: z.string().default('/default-fallback_image.webp'),
+  imageStorageKey: z.string().optional().or(z.literal('')),
+  youtubeVideoId: z.string().nullable().optional(),
+  youtubeVideoUrl: z.string().nullable().optional(),
+  videoUrl: z.string().optional().or(z.literal('')),
+  videoStorageKey: z.string().optional().or(z.literal('')),
   isAvailable: z.boolean().default(true),
   dietary: z.enum(['veg', 'non-veg', 'egg', 'vegan'], {
     message: 'Please select a dietary type.',
