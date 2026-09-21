@@ -107,11 +107,11 @@ export class PersistentMenuRepository implements IMenuRepository {
     });
   }
 
-  private getAuthHeaders(): Record<string, string> {
+  private async getAuthHeaders(): Promise<Record<string, string>> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    const token = adminAuth.getStoredToken();
+    const token = await adminAuth.getFreshToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -151,7 +151,7 @@ export class PersistentMenuRepository implements IMenuRepository {
   async updateBusinessProfile(data: Partial<BusinessProfile>): Promise<BusinessProfile> {
     const res = await fetch('/api/business', {
       method: 'PUT',
-      headers: this.getAuthHeaders(),
+      headers: await this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
     const resData = await res.json();
@@ -204,7 +204,7 @@ export class PersistentMenuRepository implements IMenuRepository {
   async createCategory(data: Omit<Category, 'id' | 'itemCount'>): Promise<Category> {
     const res = await fetch('/api/categories', {
       method: 'POST',
-      headers: this.getAuthHeaders(),
+      headers: await this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
     const resData = await res.json();
@@ -226,7 +226,7 @@ export class PersistentMenuRepository implements IMenuRepository {
   async updateCategory(id: string, data: Partial<Category>): Promise<Category> {
     const res = await fetch(`/api/categories/${id}`, {
       method: 'PUT',
-      headers: this.getAuthHeaders(),
+      headers: await this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
     const resData = await res.json();
@@ -255,7 +255,7 @@ export class PersistentMenuRepository implements IMenuRepository {
 
     const res = await fetch(`/api/categories/${id}`, {
       method: 'DELETE',
-      headers: this.getAuthHeaders(),
+      headers: await this.getAuthHeaders(),
     });
     const resData = await res.json();
     this.checkAuthError(res.status, resData);
@@ -336,7 +336,7 @@ export class PersistentMenuRepository implements IMenuRepository {
   async createFoodItem(data: Omit<FoodItem, 'id' | 'finalPrice'>): Promise<FoodItem> {
     const res = await fetch('/api/food-items', {
       method: 'POST',
-      headers: this.getAuthHeaders(),
+      headers: await this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
     const resData = await res.json();
@@ -358,7 +358,7 @@ export class PersistentMenuRepository implements IMenuRepository {
   async updateFoodItem(id: string, data: Partial<FoodItem>): Promise<FoodItem> {
     const res = await fetch(`/api/food-items/${id}`, {
       method: 'PUT',
-      headers: this.getAuthHeaders(),
+      headers: await this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
     const resData = await res.json();
@@ -379,7 +379,7 @@ export class PersistentMenuRepository implements IMenuRepository {
   async deleteFoodItem(id: string): Promise<DeleteResult> {
     const res = await fetch(`/api/food-items/${id}`, {
       method: 'DELETE',
-      headers: this.getAuthHeaders(),
+      headers: await this.getAuthHeaders(),
     });
     const resData = await res.json();
     this.checkAuthError(res.status, resData);
