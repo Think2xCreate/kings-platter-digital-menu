@@ -33,7 +33,7 @@ The King's Platter QR Digital Menu Application is built on **Next.js App Router*
 - `categoryService.ts`: Category CRUD operations, ordering, and dependency safety checks (prevents deleting categories that contain active food items).
 - `foodItemService.ts`: Food item CRUD, query filtering, and server-side `finalPrice` calculation from base price and percentage discounts.
 - `businessService.ts`: Profile management and dynamic profile completion calculation.
-- `seedService.ts`: Automatic database initialization from menu master records if Firestore collections are empty.
+- `scripts/import-pdf-menu.ts`: CLI menu dataset importer for populating 100% accurate categories and food items from master menu PDF into Firestore.
 
 ### 4. Media Storage & Image Processing Layer (`src/lib/supabase/`, `src/lib/media/`, `src/app/api/upload/`)
 - **Supabase Storage:** Stores media assets (logo, category covers, food item photos) in `kings-platter-media` bucket.

@@ -35,9 +35,28 @@ export async function uploadImageToSupabase(
     body: formData,
   });
 
-  const resData = await response.json();
+  let resData: any;
+  const contentType = response.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    try {
+      resData = await response.json();
+    } catch {
+      throw new Error('Image upload server returned invalid data. Please try again.');
+    }
+  } else {
+    // Response is non-JSON (e.g. HTML 404/500 page from platform/router)
+    if (response.status === 413) {
+      throw new Error('Image file size is too large for the server limit.');
+    }
+    if (response.status === 401) {
+      throw new Error('Your session has expired. Please sign in again.');
+    }
+    throw new Error('Unable to upload the image. Please try again.');
+  }
+
   if (!response.ok || !resData.success) {
-    throw new Error(resData.error?.message || 'Failed to upload image.');
+    throw new Error(resData.error?.message || 'Unable to upload the image. Please try again.');
   }
 
   return {

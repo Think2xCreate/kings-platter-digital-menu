@@ -4,13 +4,18 @@ import { getAuth, Auth } from 'firebase-admin/auth';
 import { getStorage, Storage } from 'firebase-admin/storage';
 
 function getPrivateKey(): string | undefined {
-  const rawKey =
+  let rawKey =
     process.env.FIREBASE_PRIVATE_KEY ||
     (process.env.FIREBASE_PRIVATE_KEY_PART1 && process.env.FIREBASE_PRIVATE_KEY_PART2
       ? process.env.FIREBASE_PRIVATE_KEY_PART1 + process.env.FIREBASE_PRIVATE_KEY_PART2
       : undefined);
 
-  return rawKey ? rawKey.replace(/\\n/g, '\n') : undefined;
+  if (!rawKey) return undefined;
+  rawKey = rawKey.trim();
+  if ((rawKey.startsWith('"') && rawKey.endsWith('"')) || (rawKey.startsWith("'") && rawKey.endsWith("'"))) {
+    rawKey = rawKey.slice(1, -1);
+  }
+  return rawKey.replace(/\\n/g, '\n');
 }
 
 export function hasAdminCredentials(): boolean {
@@ -44,6 +49,7 @@ function getAdminApp(): App {
   }
 
   if (privateKey && clientEmail) {
+    console.log(`[FirebaseAdmin] Initializing with service account cert for project: ${projectId}`);
     return initializeApp({
       credential: cert({
         projectId,
@@ -54,6 +60,7 @@ function getAdminApp(): App {
     });
   }
 
+  console.log(`[FirebaseAdmin] Warning: Initializing WITHOUT credentials for project: ${projectId}`);
   return initializeApp({
     projectId,
     storageBucket: `${projectId}.appspot.com`,

@@ -434,8 +434,7 @@ export function FoodItemFormModal({
               {/* YouTube Video Section (Concept 01 Cinematic Food Hero) */}
               <div className="w-full pt-3 border-t border-gray-200">
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5 text-left flex items-center justify-between">
-                  <span>Cinematic Hero Video</span>
-                  <span className="text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-semibold border border-amber-200">Concept 01</span>
+                  <span>Video</span>
                 </label>
 
                 {/* YouTube Video URL Text Field */}
@@ -467,7 +466,7 @@ export function FoodItemFormModal({
                     )}
                   </div>
                   <p className="text-[10px] text-gray-500 mt-1">
-                    Paste YouTube URL. The video will play in Concept 01 customer modal.
+                    Paste YouTube URL. The video will play in customer modal.
                   </p>
                   {youtubeUrlError && (
                     <p className="text-[11px] text-red-600 font-bold mt-1">
