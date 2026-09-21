@@ -80,6 +80,15 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    const { data: bucketData, error: getBucketErr } = await supabase.storage.getBucket(BUCKET_NAME);
+    if (getBucketErr || !bucketData) {
+      await supabase.storage.createBucket(BUCKET_NAME, {
+        public: true,
+        fileSizeLimit: 10485760,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      }).catch(() => {});
+    }
+
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(processed.filename, processed.buffer, {

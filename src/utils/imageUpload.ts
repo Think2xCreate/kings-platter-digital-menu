@@ -23,7 +23,7 @@ export async function uploadImageToSupabase(
   formData.append('file', file);
   formData.append('folder', folder);
 
-  const token = adminAuth.getStoredToken();
+  const token = await adminAuth.getFreshToken();
   const headers: Record<string, string> = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -74,7 +74,7 @@ export async function deleteImageFromSupabase(storageKey?: string | null): Promi
     return true;
   }
 
-  const token = adminAuth.getStoredToken();
+  const token = await adminAuth.getFreshToken();
   const headers: Record<string, string> = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

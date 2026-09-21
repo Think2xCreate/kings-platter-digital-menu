@@ -49,6 +49,24 @@ export const adminAuth = {
     }
   },
 
+  async getFreshToken(): Promise<string | null> {
+    if (typeof window === 'undefined') return null;
+    if (auth.currentUser) {
+      try {
+        const freshToken = await auth.currentUser.getIdToken();
+        if (freshToken) {
+          const isLocal = !!localStorage.getItem(TOKEN_STORAGE_KEY);
+          const storage = isLocal ? localStorage : sessionStorage;
+          storage.setItem(TOKEN_STORAGE_KEY, freshToken);
+          return freshToken;
+        }
+      } catch (err) {
+        console.warn('[adminAuth] Failed to fetch fresh token from auth:', err);
+      }
+    }
+    return this.getStoredToken();
+  },
+
   getCurrentUser(): AdminUser | null {
     return this.getStoredUser();
   },
