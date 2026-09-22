@@ -1,8 +1,0 @@
-{
-  "name": "kings-platter-digital-menu",
-  "appsail": {
-    "stack": "node22",
-    "build_command": "npm install && npm run build",
-    "start_command": "npm start"
-  }
-}

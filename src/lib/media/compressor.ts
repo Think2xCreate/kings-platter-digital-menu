@@ -48,39 +48,52 @@ export async function processAndConvertToWebP({
     throw new Error(`Image size exceeds the allowed limit of ${limitMB}MB.`);
   }
 
-  // 3. Process & Convert to WebP using Sharp
-  const sharpInstance = sharp(buffer);
-  const metadata = await sharpInstance.metadata();
-
-  if (!metadata.format) {
-    throw new Error('Failed to parse image file data.');
-  }
-
-  let pipeline = sharpInstance;
-  if (metadata.width && metadata.width > 1920) {
-    pipeline = pipeline.resize({ width: 1920, fit: 'inside', withoutEnlargement: true });
-  }
-
-  const webpBuffer = await pipeline
-    .webp({
-      quality: 80,
-      effort: 4,
-    })
-    .toBuffer();
-
   const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
   const cleanBaseName = originalName
     .split('.')[0]
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-');
-  const filename = `${folder}/${uniqueId}-${cleanBaseName || 'image'}.webp`;
+
+  // 3. Process & Convert to WebP using Sharp with safe fallback
+  try {
+    const sharpInstance = sharp(buffer);
+    const metadata = await sharpInstance.metadata();
+
+    if (metadata.format) {
+      let pipeline = sharpInstance;
+      if (metadata.width && metadata.width > 1920) {
+        pipeline = pipeline.resize({ width: 1920, fit: 'inside', withoutEnlargement: true });
+      }
+
+      const webpBuffer = await pipeline
+        .webp({
+          quality: 80,
+          effort: 4,
+        })
+        .toBuffer();
+
+      const filename = `${folder}/${uniqueId}-${cleanBaseName || 'image'}.webp`;
+      return {
+        buffer: webpBuffer,
+        mimeType: 'image/webp',
+        filename,
+        width: metadata.width,
+        height: metadata.height,
+        sizeBytes: webpBuffer.length,
+      };
+    }
+  } catch (sharpErr) {
+    console.warn('[ImageCompressor] Sharp processing warning, falling back to original buffer:', sharpErr);
+  }
+
+  // Fallback to original valid image buffer if sharp processing is unavailable
+  const ext = cleanMime.includes('png') ? 'png' : cleanMime.includes('webp') ? 'webp' : 'jpg';
+  const fallbackFilename = `${folder}/${uniqueId}-${cleanBaseName || 'image'}.${ext}`;
 
   return {
-    buffer: webpBuffer,
-    mimeType: 'image/webp',
-    filename,
-    width: metadata.width,
-    height: metadata.height,
-    sizeBytes: webpBuffer.length,
+    buffer,
+    mimeType: cleanMime as 'image/webp',
+    filename: fallbackFilename,
+    sizeBytes: buffer.length,
   };
 }

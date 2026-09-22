@@ -27,15 +27,15 @@ export function BrandLoader({
 
   // Dynamic royal culinary status messages for an immersive feel
   const customerSteps = [
-    'Igniting the royal kitchen...',
-    'Curating signature recipes...',
-    'Setting the King’s Platter...',
+    'Warming the kitchen...',
+    'Preparing your meal...',
+    'Almost ready...',
   ];
 
   const adminSteps = [
     'Verifying credentials...',
-    'Connecting live database...',
-    'Preparing control center...',
+    'Loading data...',
+    'Almost ready...',
   ];
 
   const steps = variant === 'admin' ? adminSteps : customerSteps;

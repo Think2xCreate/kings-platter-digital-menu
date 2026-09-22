@@ -36,7 +36,14 @@ export function mapErrorToAppError(
     return { code: 'UNKNOWN_ERROR', message: fallbackMessage };
   }
 
-  const rawMessage = error instanceof Error ? error.message : String(error);
+  let rawMessage = fallbackMessage;
+  if (error instanceof Error) {
+    rawMessage = error.message;
+  } else if (typeof error === 'object' && error !== null && 'message' in error) {
+    rawMessage = String((error as { message: unknown }).message);
+  } else if (error) {
+    rawMessage = String(error);
+  }
 
   // 1. Session & Auth Expired
   if (

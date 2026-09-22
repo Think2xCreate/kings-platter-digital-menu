@@ -4,6 +4,9 @@ import { checkRateLimit } from '@/lib/rate-limit/rate-limiter';
 import { getServerSupabaseClient, hasSupabaseCredentials } from '@/lib/supabase/server';
 import { mapErrorToAppError } from '@/lib/errors/appError';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
+
 export async function DELETE(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';

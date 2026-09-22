@@ -85,8 +85,12 @@ export async function deleteImageFromSupabase(storageKey?: string | null): Promi
       method: 'DELETE',
       headers,
     });
-    const resData = await res.json();
-    return res.ok && resData.success;
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const resData = await res.json();
+      return res.ok && resData.success;
+    }
+    return res.ok;
   } catch (err) {
     console.warn('Failed to delete old Supabase image:', err);
     return false;

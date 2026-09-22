@@ -6,6 +6,8 @@ import { FoodItemSchema } from '@/lib/validation/schemas';
 import { normalizeYouTubeVideoUrl } from '@/utils/imageResolver';
 import { mapErrorToAppError } from '@/lib/errors/appError';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const foodItems = await foodItemService.getAllFoodItems();
