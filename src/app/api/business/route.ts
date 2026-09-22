@@ -5,6 +5,8 @@ import { checkRateLimit } from '@/lib/rate-limit/rate-limiter';
 import { BusinessProfileSchema } from '@/lib/validation/schemas';
 import { mapErrorToAppError } from '@/lib/errors/appError';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const profile = await businessService.getBusinessProfile();

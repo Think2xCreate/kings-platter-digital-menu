@@ -5,10 +5,13 @@ import { getServerSupabaseClient, hasSupabaseCredentials } from '@/lib/supabase/
 import { processAndConvertToWebP } from '@/lib/media/compressor';
 import { mapErrorToAppError } from '@/lib/errors/appError';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
+
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-    const rateCheck = checkRateLimit(`upload:${ip}`, 10, 60 * 1000);
+    const rateCheck = checkRateLimit(`upload:${ip}`, 15, 60 * 1000);
     if (!rateCheck.success) {
       return NextResponse.json({
         success: false,
@@ -66,38 +69,48 @@ export async function POST(request: NextRequest) {
     const BUCKET_NAME = 'kings-platter-media';
 
     if (!hasSupabaseCredentials()) {
+      console.error('[UploadAPI] Missing Supabase credentials on server environment.');
       return NextResponse.json({
         success: false,
-        error: { code: 'CONFIG_ERROR', message: 'Image upload is temporarily unavailable.' },
+        error: { code: 'CONFIG_ERROR', message: 'Image upload is temporarily unavailable due to server configuration.' },
       }, { status: 500 });
     }
 
     const supabase = getServerSupabaseClient();
     if (!supabase) {
+      console.error('[UploadAPI] Failed to initialize Supabase server client.');
       return NextResponse.json({
         success: false,
         error: { code: 'CLIENT_ERROR', message: 'Image upload failed. Please try again.' },
       }, { status: 500 });
     }
 
-    const { data: bucketData, error: getBucketErr } = await supabase.storage.getBucket(BUCKET_NAME);
-    if (getBucketErr || !bucketData) {
-      await supabase.storage.createBucket(BUCKET_NAME, {
-        public: true,
-        fileSizeLimit: 10485760,
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-      }).catch(() => {});
-    }
-
-    const { error: uploadError } = await supabase.storage
+    let uploadResult = await supabase.storage
       .from(BUCKET_NAME)
       .upload(processed.filename, processed.buffer, {
-        contentType: 'image/webp',
+        contentType: processed.mimeType || 'image/webp',
         upsert: true,
       });
 
-    if (uploadError) {
-      const appErr = mapErrorToAppError(uploadError, 'Image upload failed. Please try again.');
+    if (uploadResult.error && (uploadResult.error.message?.includes('Bucket not found') || uploadResult.error.message?.includes('bucket'))) {
+      console.warn(`[UploadAPI] Bucket not found fallback triggered for ${BUCKET_NAME}`);
+      await supabase.storage.createBucket(BUCKET_NAME, {
+        public: true,
+        fileSizeLimit: 10485760,
+        allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+      }).catch((e) => console.warn('[UploadAPI] Create bucket warning:', e));
+
+      uploadResult = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(processed.filename, processed.buffer, {
+          contentType: processed.mimeType || 'image/webp',
+          upsert: true,
+        });
+    }
+
+    if (uploadResult.error) {
+      console.error('[UploadAPI] Supabase storage upload error:', uploadResult.error);
+      const appErr = mapErrorToAppError(uploadResult.error, 'Image upload failed. Please try again.');
       return NextResponse.json({
         success: false,
         error: { code: 'UPLOAD_ERROR', message: appErr.message },
@@ -113,11 +126,12 @@ export async function POST(request: NextRequest) {
       data: {
         url: publicUrlData.publicUrl,
         path: processed.filename,
-        format: 'webp',
+        format: processed.filename.endsWith('.webp') ? 'webp' : 'image',
         sizeBytes: processed.sizeBytes,
       },
     });
   } catch (error: unknown) {
+    console.error('[UploadAPI] Unhandled POST exception:', error);
     const appErr = mapErrorToAppError(error, 'Image upload failed. Please try again.');
     return NextResponse.json({ success: false, error: appErr }, { status: 500 });
   }

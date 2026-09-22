@@ -6,6 +6,8 @@ import { FoodItemSchema } from '@/lib/validation/schemas';
 import { normalizeYouTubeVideoUrl } from '@/utils/imageResolver';
 import { mapErrorToAppError } from '@/lib/errors/appError';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

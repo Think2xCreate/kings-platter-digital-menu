@@ -4,14 +4,18 @@ import { getAuth, Auth } from 'firebase-admin/auth';
 import { getStorage, Storage } from 'firebase-admin/storage';
 
 function getPrivateKey(): string | undefined {
-  let rawKey =
-    process.env.FIREBASE_PRIVATE_KEY ||
-    (process.env.FIREBASE_PRIVATE_KEY_PART1 && process.env.FIREBASE_PRIVATE_KEY_PART2
-      ? process.env.FIREBASE_PRIVATE_KEY_PART1 + process.env.FIREBASE_PRIVATE_KEY_PART2
-      : undefined);
+  const parts = [
+    process.env.FIREBASE_PRIVATE_KEY,
+    process.env.FIREBASE_PRIVATE_KEY_1,
+    process.env.FIREBASE_PRIVATE_KEY_2,
+    process.env.FIREBASE_PRIVATE_KEY_3,
+    process.env.FIREBASE_PRIVATE_KEY_PART1,
+    process.env.FIREBASE_PRIVATE_KEY_PART2,
+    process.env.FIREBASE_PRIVATE_KEY_PART3,
+  ].filter(Boolean);
 
-  if (!rawKey) return undefined;
-  rawKey = rawKey.trim();
+  if (parts.length === 0) return undefined;
+  let rawKey = parts.join('').trim();
   if ((rawKey.startsWith('"') && rawKey.endsWith('"')) || (rawKey.startsWith("'") && rawKey.endsWith("'"))) {
     rawKey = rawKey.slice(1, -1);
   }
