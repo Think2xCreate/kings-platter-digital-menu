@@ -3,29 +3,39 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth, Auth } from 'firebase-admin/auth';
 import { getStorage, Storage } from 'firebase-admin/storage';
 
+function getCleanEnv(name: string): string | undefined {
+  const val = process.env[name];
+  if (!val) return undefined;
+  let clean = val.trim();
+  if ((clean.startsWith('"') && clean.endsWith('"')) || (clean.startsWith("'") && clean.endsWith("'"))) {
+    clean = clean.slice(1, -1).trim();
+  }
+  return clean || undefined;
+}
+
 function getPrivateKey(): string | undefined {
   const parts = [
-    process.env.FIREBASE_PRIVATE_KEY,
-    process.env.FIREBASE_PRIVATE_KEY_1,
-    process.env.FIREBASE_PRIVATE_KEY_2,
-    process.env.FIREBASE_PRIVATE_KEY_3,
-    process.env.FIREBASE_PRIVATE_KEY_PART1,
-    process.env.FIREBASE_PRIVATE_KEY_PART2,
-    process.env.FIREBASE_PRIVATE_KEY_PART3,
+    getCleanEnv('FIREBASE_PRIVATE_KEY'),
+    getCleanEnv('FIREBASE_PRIVATE_KEY_1'),
+    getCleanEnv('FIREBASE_PRIVATE_KEY_2'),
+    getCleanEnv('FIREBASE_PRIVATE_KEY_3'),
+    getCleanEnv('FIREBASE_PRIVATE_KEY_PART1'),
+    getCleanEnv('FIREBASE_PRIVATE_KEY_PART2'),
+    getCleanEnv('FIREBASE_PRIVATE_KEY_PART3'),
   ].filter(Boolean);
 
   if (parts.length === 0) return undefined;
   let rawKey = parts.join('').trim();
   if ((rawKey.startsWith('"') && rawKey.endsWith('"')) || (rawKey.startsWith("'") && rawKey.endsWith("'"))) {
-    rawKey = rawKey.slice(1, -1);
+    rawKey = rawKey.slice(1, -1).trim();
   }
   return rawKey.replace(/\\n/g, '\n');
 }
 
 export function hasAdminCredentials(): boolean {
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const serviceAccountKey = getCleanEnv('FIREBASE_SERVICE_ACCOUNT_KEY');
   const privateKey = getPrivateKey();
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const clientEmail = getCleanEnv('FIREBASE_CLIENT_EMAIL');
   return Boolean(serviceAccountKey || (privateKey && clientEmail));
 }
 
@@ -35,10 +45,13 @@ function getAdminApp(): App {
     return existingApps[0]!;
   }
 
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const serviceAccountKey = getCleanEnv('FIREBASE_SERVICE_ACCOUNT_KEY');
   const privateKey = getPrivateKey();
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'kings-platter-menu';
+  const clientEmail = getCleanEnv('FIREBASE_CLIENT_EMAIL');
+  const projectId =
+    getCleanEnv('FIREBASE_PROJECT_ID') ||
+    getCleanEnv('NEXT_PUBLIC_FIREBASE_PROJECT_ID') ||
+    'kings-platter-digital-menu';
 
   if (serviceAccountKey) {
     try {
@@ -48,7 +61,7 @@ function getAdminApp(): App {
         storageBucket: `${projectId}.appspot.com`,
       });
     } catch {
-      console.warn('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY JSON.');
+      console.warn('[FirebaseAdmin] Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY JSON.');
     }
   }
 
@@ -64,7 +77,7 @@ function getAdminApp(): App {
     });
   }
 
-  console.log(`[FirebaseAdmin] Warning: Initializing WITHOUT credentials for project: ${projectId}`);
+  console.log(`[FirebaseAdmin] Warning: Initializing without service cert credentials for project: ${projectId}`);
   return initializeApp({
     projectId,
     storageBucket: `${projectId}.appspot.com`,
