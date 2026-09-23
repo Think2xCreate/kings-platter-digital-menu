@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { foodItemService } from '@/services/foodItemService';
-import { verifyAdminAuth } from '@/lib/security/auth';
 import { checkRateLimit } from '@/lib/rate-limit/rate-limiter';
 import { FoodItemSchema } from '@/lib/validation/schemas';
 import { normalizeYouTubeVideoUrl } from '@/utils/imageResolver';
@@ -31,6 +30,7 @@ export async function POST(request: NextRequest) {
       }, { status: 429 });
     }
 
+    const { verifyAdminAuth } = await import('@/lib/security/auth');
     const authResult = await verifyAdminAuth(request);
     if (!authResult.isAuthorized) {
       return NextResponse.json({

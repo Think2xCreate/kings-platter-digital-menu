@@ -1,5 +1,5 @@
 import { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
-import { serverDb, hasAdminCredentials } from '../lib/firebase/server';
+import { serverDb, hasAdminCredentials } from '../lib/firebase/admin-firestore';
 import { FoodItem } from '../types/menu';
 
 export const foodItemService = {

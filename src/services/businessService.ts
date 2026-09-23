@@ -1,4 +1,4 @@
-import { serverDb, hasAdminCredentials } from '../lib/firebase/server';
+import { serverDb, hasAdminCredentials } from '../lib/firebase/admin-firestore';
 import { BusinessProfile } from '../types/menu';
 
 export const businessService = {
