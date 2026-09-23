@@ -22,11 +22,69 @@ const firebaseConfig = {
   appId: cleanEnvStr(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
 };
 
-// Singleton Firebase Client Application
-const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+let clientAppInstance: FirebaseApp | null = null;
+let clientAuthInstance: Auth | null = null;
+let clientDbInstance: Firestore | null = null;
+let clientStorageInstance: FirebaseStorage | null = null;
 
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
-export const storage: FirebaseStorage = getStorage(app);
+export function getClientApp(): FirebaseApp {
+  if (!clientAppInstance) {
+    if (getApps().length > 0) {
+      clientAppInstance = getApp();
+    } else {
+      clientAppInstance = initializeApp(firebaseConfig);
+    }
+  }
+  return clientAppInstance;
+}
 
-export default app;
+export function getClientAuth(): Auth {
+  if (!clientAuthInstance) {
+    const app = getClientApp();
+    clientAuthInstance = getAuth(app);
+  }
+  return clientAuthInstance;
+}
+
+export function getClientDb(): Firestore {
+  if (!clientDbInstance) {
+    const app = getClientApp();
+    clientDbInstance = getFirestore(app);
+  }
+  return clientDbInstance;
+}
+
+export function getClientStorage(): FirebaseStorage {
+  if (!clientStorageInstance) {
+    const app = getClientApp();
+    clientStorageInstance = getStorage(app);
+  }
+  return clientStorageInstance;
+}
+
+// Build-safe Lazy Proxies prevent Firebase Web SDK initialization during static page prerendering
+export const auth: Auth = new Proxy({} as Auth, {
+  get(_target, prop, receiver) {
+    const instance = getClientAuth();
+    const value = Reflect.get(instance, prop, receiver);
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});
+
+export const db: Firestore = new Proxy({} as Firestore, {
+  get(_target, prop, receiver) {
+    const instance = getClientDb();
+    const value = Reflect.get(instance, prop, receiver);
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});
+
+export const storage: FirebaseStorage = new Proxy({} as FirebaseStorage, {
+  get(_target, prop, receiver) {
+    const instance = getClientStorage();
+    const value = Reflect.get(instance, prop, receiver);
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});
+
+export default getClientApp;
