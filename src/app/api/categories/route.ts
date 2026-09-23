@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { categoryService } from '@/services/categoryService';
-import { verifyAdminAuth } from '@/lib/security/auth';
 import { checkRateLimit } from '@/lib/rate-limit/rate-limiter';
 import { CategorySchema } from '@/lib/validation/schemas';
 import { mapErrorToAppError } from '@/lib/errors/appError';
@@ -35,6 +34,7 @@ export async function POST(request: NextRequest) {
       }, { status: 429 });
     }
 
+    const { verifyAdminAuth } = await import('@/lib/security/auth');
     const authResult = await verifyAdminAuth(request);
     if (!authResult.isAuthorized) {
       return NextResponse.json({

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { serverAuth, serverDb, hasAdminCredentials } from '../firebase/server';
+import { serverDb, hasAdminCredentials } from '../firebase/admin-firestore';
+import { serverAuth } from '../firebase/admin-auth';
 
 export interface AuthResult {
   isAuthorized: boolean;

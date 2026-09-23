@@ -1,5 +1,5 @@
 import { Query, QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
-import { serverDb, hasAdminCredentials } from '../lib/firebase/server';
+import { serverDb, hasAdminCredentials } from '../lib/firebase/admin-firestore';
 import { Category } from '../types/menu';
 
 export const categoryService = {

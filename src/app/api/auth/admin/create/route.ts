@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminAuth } from '@/lib/security/auth';
-import { serverAuth, serverDb, hasAdminCredentials } from '@/lib/firebase/server';
+import { serverDb, hasAdminCredentials } from '@/lib/firebase/admin-firestore';
+import { serverAuth } from '@/lib/firebase/admin-auth';
 
 const MAX_ADMIN_LIMIT = 3;
 

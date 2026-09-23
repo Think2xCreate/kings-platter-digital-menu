@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit/rate-limiter';
-import { serverAuth, serverDb, hasAdminCredentials } from '@/lib/firebase/server';
+import { serverDb, hasAdminCredentials } from '@/lib/firebase/admin-firestore';
+import { serverAuth } from '@/lib/firebase/admin-auth';
 
 export async function POST(request: NextRequest) {
   try {
